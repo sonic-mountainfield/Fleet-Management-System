@@ -1,26 +1,52 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-// 注意：這些頁面元件我們稍後會一步步建立，所以先標註起來 (註解掉)
-// import Navbar from './components/Navbar';
-// import Login from './pages/Login';
-// import Itinerary from './pages/Itinerary';
+// 引入我們剛剛辛苦寫好的所有頁面與元件！
+import Navbar from './components/Navbar';
+import Login from './pages/Login';
+import Itinerary from './pages/Itinerary';
+import Admin from './pages/Admin';
+import Memoir from './pages/Memoir';
 
 export default function App() {
-  // 管理使用者是否已登入與使用者名稱
+  // 記錄使用者是否登入，以及使用者的名字
   const [user, setUser] = useState(null);
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-slate-900 text-white pb-20 font-sans">
+      {/* 這裡是整個 APP 的最外層畫布，設定為深色背景 */}
+      <div className="min-h-screen bg-slate-900 text-white font-sans">
         
-        {/* 測試用畫面：確認 App.jsx 有成功運作 */}
-        <div className="flex flex-col items-center justify-center min-h-screen p-4">
-            <h1 className="text-3xl font-bold text-orange-500 mb-4">🏍️ 陽光小屋車隊系統</h1>
-            <p className="text-slate-400">系統大腦 App.jsx 建立成功！</p>
-            <p className="text-slate-500 text-sm mt-2">準備載入登入頁面與行程資料...</p>
-        </div>
+        {/* Routes 負責根據網址切換不同的畫面 */}
+        <Routes>
+          {/* 首頁：如果還沒登入，就顯示 Login 頁面；如果登入了，就自動跳轉到 Itinerary (今日行程) */}
+          <Route 
+            path="/" 
+            element={user ? <Navigate to="/itinerary" /> : <Login onLogin={setUser} />} 
+          />
+          
+          {/* 行程打卡頁：必須有 user 資料才能看，否則踢回首頁 */}
+          <Route 
+            path="/itinerary" 
+            element={user ? <Itinerary user={user} /> : <Navigate to="/" />} 
+          />
+          
+          {/* 車隊後台頁 */}
+          <Route 
+            path="/admin" 
+            element={user ? <Admin /> : <Navigate to="/" />} 
+          />
+          
+          {/* 騎行回憶錄 */}
+          <Route 
+            path="/memoir" 
+            element={user ? <Memoir user={user} /> : <Navigate to="/" />} 
+          />
+        </Routes>
 
+        {/* Navbar (底部導航列)：只有在登入狀態 (user 存在) 時才會顯示 */}
+        {user && <Navbar />}
+        
       </div>
     </BrowserRouter>
   );
