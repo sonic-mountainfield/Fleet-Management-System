@@ -1,0 +1,6 @@
+Day,NodeID,Type,Time,Title,Distance_Time,AmapLink,Note
+4,A0,start,08:30,起點: 布達拉宫蘭歐酒店,,,汽車組08:00先走
+4,SS1,pace,,控速路段,64km / 1.5hrs,https://surl.amap.com/2eqorXT1q2DM,第一段不走高速
+4,A1,waypoint,10:00,集結點: 曲水文化廣場,,,抵達後打卡回報
+4,SS2,pace,,控速路段,61km / 1hr,https://surl.amap.com/I40Lbt3Jd5m,山區彎道多
+4,A2,waypoint,11:00,集結點: 尼木公安檢查站,,,
