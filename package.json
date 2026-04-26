@@ -1,11 +1,11 @@
 {
   "name": "fleet-management-system",
   "version": "1.0.0",
-  "description": "陽光小屋車隊系統 - 西藏自駕導航與打卡專用 Web App",
+  "description": "陽光小屋車隊系統",
   "main": "index.html",
   "scripts": {
     "start": "serve .",
-    "build": "echo 'No build step required'"
+    "build": "exit 0"
   },
   "keywords": [],
   "author": "Sunny House",
