@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陽光小屋 - 後台管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+        .admin-card { border-left: 6px solid #8B1A1A; }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <header class="bg-[#8B1A1A] text-white p-6 rounded-2xl shadow-xl mb-8">
+        <h1 class="text-2xl font-bold tracking-widest">車隊後台指揮中心</h1>
+        <p class="text-xs text-[#D4AF37] mt-1 uppercase font-bold">Admin Command Center</p>
+    </header>
+
+    <div class="grid grid-cols-2 gap-4 mb-8">
+        <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
+            <p class="text-gray-400 text-[10px] font-bold uppercase">總打卡數</p>
+            <h2 id="totalCheckIns" class="text-2xl font-black text-blue-600">--</h2>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-green-500">
+            <p class="text-gray-400 text-[10px] font-bold uppercase">今日完賽率</p>
+            <h2 id="completionRate" class="text-2xl font-black text-green-600">--</h2>
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <div class="flex justify-between items-end mb-2">
+            <h3 class="font-bold text-gray-700">即時打卡動態</h3>
+            <button onclick="fetchRecords()" class="text-xs text-blue-600 font-bold">手動刷新 ↻</button>
+        </div>
+        <div id="recordList" class="space-y-3">
+            <p class="text-center py-10 text-gray-400">正在同步衛星數據...</p>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns';
+
+        async function fetchRecords() {
+            try {
+                const response = await fetch(API_URL);
+                let data = await response.json();
+                
+                // 讓最新的紀錄排在最上面
+                data.reverse();
+
+                document.getElementById('totalCheckIns').innerText = data.length;
+                renderRecords(data);
+            } catch (e) {
+                alert("讀取紀錄失敗");
+            }
+        }
+
+        function renderRecords(records) {
+            const container = document.getElementById('recordList');
+            container.innerHTML = records.map(reg => `
+                <div class="admin-card bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded font-bold text-gray-500">${reg.CustomerID}</span>
+                            <h4 class="font-bold text-gray-800 text-lg">${reg.LocationName}</h4>
+                        </div>
+                        <span class="${reg.Type === 'START' ? 'text-blue-500' : 'text-red-500'} font-black text-xs italic">${reg.Type}</span>
+                    </div>
+                    <div class="mt-3 flex justify-between items-center text-[11px] text-gray-400 border-t pt-2">
+                        <span>賽段: ${reg.Section}</span>
+                        <span class="font-mono">${reg.Day} ${reg.CheckIn_Time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 每 30 秒自動刷新一次
+        setInterval(fetchRecords, 30000);
+        fetchRecords();
+    </script>
+</body>
+</html>
