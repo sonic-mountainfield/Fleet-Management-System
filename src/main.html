@@ -3,117 +3,189 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>西藏自駕導航終端</title>
+    <title>西藏自駕導航終端 - 陽光小屋</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .stage-card { border-left: 8px solid #8B1A1A; transition: all 0.3s ease; }
-        .description-box { background: rgba(139, 26, 26, 0.03); border-radius: 8px; border-left: 3px solid #D4AF37; }
+        @import url('https://fonts.font.im/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f0f2f5; }
+        .stage-card { border-left: 10px solid #8B1A1A; position: relative; transition: transform 0.2s; }
+        .stage-card:active { transform: scale(0.98); }
+        .description-box { 
+            background: linear-gradient(to right, #fffaf0, #ffffff); 
+            border-left: 4px solid #D4AF37; 
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+        }
+        .nav-btn { background-color: #1e293b; color: #D4AF37; }
+        .checkin-start { background-color: #8B1A1A; color: white; }
+        .checkin-end { border: 2px solid #8B1A1A; color: #8B1A1A; background: white; }
+        .sticky-header { position: sticky; top: 0; z-index: 50; }
     </style>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="pb-10">
 
-    <div id="dayRouteContainer" class="max-w-4xl mx-auto mb-6 bg-white rounded-2xl shadow-lg border-t-4 border-blue-500 overflow-hidden">
-        <div class="p-6">
-            <div class="flex justify-between items-center mb-4">
-                <h2 id="currentDayTitle" class="text-xl font-black text-blue-800 tracking-tight">正在讀取今日行程...</h2>
-                <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-xs font-bold uppercase">Day Route</span>
+    <nav class="sticky-header bg-[#8B1A1A] text-white p-4 shadow-xl mb-6">
+        <div class="flex justify-between items-center max-w-4xl mx-auto">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center">
+                    <span class="text-[#8B1A1A] font-black text-[10px]">SH</span>
+                </div>
+                <h1 class="font-black tracking-tighter text-lg">西藏珠峰環線導航</h1>
             </div>
-            <div id="dayRouteSummary" class="text-sm text-gray-600 space-y-1 mb-6"></div>
-            
-            <button id="openFullDayNav" class="w-full py-4 bg-blue-600 text-white font-black rounded-xl shadow-lg active:scale-95 transition-all text-lg">
-                觀看全日路線
-            </button>
+            <div id="dateDisplay" class="text-xs font-bold bg-black/20 px-3 py-1 rounded-full border border-white/20">
+                Loading...
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div id="stageList" class="max-w-4xl mx-auto space-y-6">
+    <main class="max-w-4xl mx-auto px-4 space-y-6">
+
+        <section id="dayRouteContainer" class="bg-white rounded-3xl shadow-lg border-t-8 border-blue-600 overflow-hidden">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="dayTitle" class="text-2xl font-black text-blue-900 italic">讀取行程中...</h2>
+                    <span class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">Full Route</span>
+                </div>
+                
+                <div id="daySummary" class="bg-blue-50/50 p-4 rounded-2xl mb-6 space-y-2 border border-blue-100">
+                    </div>
+
+                <button id="btnFullDay" class="w-full py-5 bg-blue-600 text-white font-black rounded-2xl shadow-lg active:bg-blue-800 transition-all text-xl flex items-center justify-center gap-3">
+                    <span>🗺️</span> 觀看全日路線
+                </button>
+            </div>
+        </section>
+
+        <div id="stageList" class="space-y-8">
+            <div class="text-center py-20 text-gray-400 font-bold animate-pulse italic">
+                正在同步雲端衛星數據...
+            </div>
         </div>
+
+    </main>
 
     <script>
+        // 設定目前的日期
+        const currentDay = "4/28"; 
         const API_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=Itinerary';
-        const currentDay = "4/28"; // 您可以根據實際情況動態設定
 
-        async function loadItinerary() {
+        async function initApp() {
+            document.getElementById('dateDisplay').innerText = `DATE: ${currentDay}`;
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
-                renderUI(data.filter(item => item.Day === currentDay));
+                const todayData = data.filter(item => item.Day === currentDay);
+                renderDayUI(todayData);
             } catch (e) {
-                console.error("載入行程失敗");
+                alert("網路連線不穩定，請重新整理頁面。");
             }
         }
 
-        function renderUI(dayData) {
+        function renderDayUI(data) {
             const list = document.getElementById('stageList');
-            const summary = document.getElementById('dayRouteSummary');
-            const dayTitle = document.getElementById('currentDayTitle');
+            const summary = document.getElementById('daySummary');
+            const title = document.getElementById('dayTitle');
             list.innerHTML = "";
 
-            // 1. 處理全日路線
-            const dayLine = dayData.find(item => item.Section === "DayLine");
-            if (dayLine) {
-                dayTitle.innerText = `${currentDay} 全日路線`;
+            // 1. 處理全日概覽 (DayLine)
+            const dayInfo = data.find(i => i.Section === "DayLine");
+            if (dayInfo) {
+                title.innerText = `${currentDay} 全日路線`;
                 summary.innerHTML = `
-                    <p class="font-bold">🚩 ${dayLine.Start_Point}</p>
-                    <p class="font-bold text-[#8B1A1A]">🏁 ${dayLine.End_Point}</p>
-                    <p class="pt-2 text-xs text-gray-400 italic">${dayLine.Description || ''}</p>
+                    <div class="flex items-center gap-2 text-gray-700">
+                        <span class="text-xs font-black bg-gray-200 px-2 rounded">START</span>
+                        <span class="font-bold">${dayInfo.Start_Point}</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-gray-700">
+                        <span class="text-xs font-black bg-[#8B1A1A] text-white px-2 rounded">FINISH</span>
+                        <span class="font-bold">${dayInfo.End_Point}</span>
+                    </div>
                 `;
-                document.getElementById('openFullDayNav').onclick = () => window.open(dayLine.Amap_Link);
+                document.getElementById('btnFullDay').onclick = () => window.location.href = dayInfo.Amap_Link;
             }
 
             // 2. 處理 SS 賽段
-            dayData.filter(item => item.Section.startsWith('SS')).forEach(ss => {
+            const ssStages = data.filter(i => i.Section.startsWith("SS"));
+            ssStages.forEach(ss => {
                 const card = document.createElement('div');
-                card.className = "stage-card bg-white rounded-2xl shadow-md overflow-hidden p-6 relative";
+                card.className = "stage-card bg-white rounded-3xl shadow-xl p-6 overflow-hidden";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-4">
                         <div>
-                            <h3 class="text-2xl font-black text-[#8B1A1A] italic">${ss.Section} <span class="text-sm font-bold text-gray-400 ml-2">${ss.T || ''}</span></h3>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Special Stage</p>
+                            <span class="bg-[#8B1A1A] text-[#D4AF37] px-3 py-1 rounded-lg text-xs font-black italic uppercase tracking-tighter">${ss.Section}</span>
+                            <h3 class="text-2xl font-black text-gray-800 mt-2">${ss.T || '賽段時間未定'}</h3>
                         </div>
                         <div class="text-right">
-                            <p class="text-sm font-black text-gray-800">${ss.D || ''}</p>
-                            <p class="text-[10px] text-gray-400 font-bold uppercase">${ss.Est_Time || ''}</p>
+                            <p class="text-xl font-black text-gray-900">${ss.D || '--'}</p>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase">${ss.Est_Time || '--'}</p>
                         </div>
                     </div>
 
-                    <div class="space-y-3 mb-6">
+                    <div class="flex flex-col gap-3 mb-6">
                         <div class="flex items-center gap-3">
-                            <span class="w-6 h-6 bg-gray-800 text-white rounded text-[10px] flex items-center justify-center font-bold">START</span>
-                            <p class="font-bold text-gray-700">${ss.Start_Point}</p>
+                            <div class="w-2 h-2 rounded-full bg-gray-300"></div>
+                            <p class="font-bold text-gray-600 text-sm">${ss.Start_Point}</p>
+                        </div>
+                        <div class="flex items-center gap-3 pl-[3px]">
+                            <div class="w-1 h-6 border-l-2 border-dotted border-gray-300 ml-1"></div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <span class="w-6 h-6 border-2 border-gray-800 text-gray-800 rounded text-[10px] flex items-center justify-center font-bold">END</span>
-                            <p class="font-bold text-gray-700">${ss.End_Point}</p>
+                            <div class="w-2 h-2 rounded-full bg-[#8B1A1A]"></div>
+                            <p class="font-black text-gray-800 text-sm">${ss.End_Point}</p>
                         </div>
                     </div>
 
                     <div class="description-box p-4 mb-6">
-                        <p class="text-xs text-gray-400 font-bold uppercase mb-1 italic">🚩 賽段重點提醒</p>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest">🚩 賽段重要提醒</span>
+                        </div>
                         <p class="text-sm text-gray-700 leading-relaxed font-medium">
-                            ${ss.Description || '本路段無特殊提醒，請保持安全駕駛。'}
+                            ${ss.Description || '本路段請保持安全車速，隨時注意路況變化。'}
                         </p>
                     </div>
 
-                    <button onclick="window.open('${ss.Amap_Link}')" class="w-full py-4 bg-gray-800 text-[#D4AF37] font-black rounded-xl mb-4 shadow-md active:bg-black transition-all">
-                        導航至此賽段
+                    <button onclick="window.location.href='${ss.Amap_Link}'" class="nav-btn w-full py-4 rounded-2xl font-black text-lg shadow-lg flex items-center justify-center gap-3 mb-6 active:scale-95 transition-all">
+                        🧭 導航至此賽段
                     </button>
 
-                    <div class="grid grid-cols-2 gap-3">
-                        <button onclick="checkIn('${ss.Section}', 'START', '${ss.Start_Point}')" class="py-3 bg-[#8B1A1A] text-white rounded-lg font-bold text-sm shadow active:scale-95 transition-all">起點打卡</button>
-                        <button onclick="checkIn('${ss.Section}', 'END', '${ss.End_Point}')" class="py-3 bg-white border-2 border-[#8B1A1A] text-[#8B1A1A] rounded-lg font-bold text-sm active:scale-95 transition-all">終點打卡</button>
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="handleCheckIn('${ss.Section}', 'START', '${ss.Start_Point}')" class="checkin-start py-4 rounded-xl font-black shadow-md active:scale-95 transition-all">
+                            起點打卡
+                        </button>
+                        <button onclick="handleCheckIn('${ss.Section}', 'END', '${ss.End_Point}')" class="checkin-end py-4 rounded-xl font-black shadow-md active:scale-95 transition-all">
+                            終點打卡
+                        </button>
                     </div>
                 `;
                 list.appendChild(card);
             });
         }
 
-        async function checkIn(section, type, locationName) {
-            // 此處維持原本的打卡 logic (Fetch API 到 SheetDB)
-            alert(`${section} - ${type} 打卡成功！`);
+        async function handleCheckIn(section, type, locationName) {
+            // 此處整合您之前的 API 打卡邏輯
+            console.log(`Checking in: ${section} ${type} at ${locationName}`);
+            alert(`${section} - ${type} 打卡發送中...`);
+            
+            // 範例 API 傳送 (請替換為您實際的 SheetDB POST 邏輯)
+            /*
+            fetch('https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    "data": [{
+                        "CustomerID": localStorage.getItem('driverID') || "GUEST",
+                        "Day": currentDay,
+                        "Section": section,
+                        "Type": type,
+                        "LocationName": locationName,
+                        "Timestamp": new Date().toISOString()
+                    }]
+                })
+            }).then(() => alert("打卡成功！"));
+            */
         }
 
-        loadItinerary();
+        // 初始化
+        initApp();
     </script>
 </body>
 </html>
