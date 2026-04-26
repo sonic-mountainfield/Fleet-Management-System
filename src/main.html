@@ -7,11 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
-        /* 背景色還原為深黑色 */
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
-        
-        /* 頂部導覽列 */
         .nav-header { 
             position: sticky; top: 0; z-index: 100; 
             background: rgba(139, 26, 26, 0.95); 
@@ -19,72 +16,20 @@
             border-bottom: 2px solid #D4AF37; 
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
         }
-
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
-        
-        .ss-header { 
-            font-size: 2.8rem; font-style: italic; font-weight: 900; 
-            background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); 
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
-            line-height: 1.3; display: inline-block; margin-left: auto;
-        }
-        
-        /* 卡片設計 */
+        .ss-header { font-size: 2.8rem; font-style: italic; font-weight: 900; background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.3; display: inline-block; margin-left: auto; }
         .stage-card { background: #141414; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.5rem; overflow: hidden; }
-        
-        /* 1. Note 區塊強化樣式 */
-        .note-container {
-            background: rgba(212, 175, 55, 0.1);
-            border: 1px solid rgba(212, 175, 55, 0.4);
-            border-left: 8px solid #D4AF37;
-            border-radius: 1.2rem;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-        }
-
-        /* 加大明顯的標題標籤 */
-        .note-badge {
-            background: #D4AF37;
-            color: #000;
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 900;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        /* 顯著的時間字體 */
-        .note-time-display {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 20px; /* 大字體 */
-            color: #D4AF37;
-            font-weight: 900;
-            margin-left: 12px;
-        }
-
-        /* 2. SS 描述文字盒：Pilot Notes */
-        .ss-description-box {
-            background: rgba(139, 26, 26, 0.08);
-            border: 1px solid rgba(139, 26, 26, 0.3);
-            border-left: 6px solid #8B1A1A;
-            padding: 1.2rem;
-            border-radius: 0 1.2rem 1.2rem 0;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
-        .label-start { background: #D4AF37; color: #000; }
-        .label-finish { background: #8B1A1A; color: #fff; }
-        
-        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .note-container { background: rgba(212, 175, 55, 0.1); border: 1px solid rgba(212, 175, 55, 0.4); border-left: 8px solid #D4AF37; border-radius: 1.2rem; padding: 1.5rem; margin-bottom: 1.5rem; }
+        .note-badge { background: #D4AF37; color: #000; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 900; text-transform: uppercase; }
+        .note-time-display { font-family: 'Orbitron', sans-serif; font-size: 20px; color: #D4AF37; font-weight: 900; margin-left: 12px; }
+        .ss-description-box { background: rgba(139, 26, 26, 0.08); border: 1px solid rgba(139, 26, 26, 0.3); border-left: 6px solid #8B1A1A; padding: 1.2rem; border-radius: 0 1.2rem 1.2rem 0; margin-top: 1rem; margin-bottom: 1.5rem; }
+        .record-sec-tag { font-size: 10px; color: #fbbf24; opacity: 0.8; margin-left: 4px; font-family: 'Orbitron'; }
+        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
-        
         .logo-glow { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
@@ -116,7 +61,6 @@
                 <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
-            
             <section id="dayOverviewSection" class="mb-8 bg-zinc-900/80 rounded-[2rem] p-8 border border-zinc-800">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="currentDayText" class="text-xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
@@ -125,7 +69,6 @@
                 <div id="dayEndpoints" class="space-y-4 border-l-4 border-gray-700 pl-6 text-white font-bold"></div>
                 <div id="dayDescription" class="mt-6 text-sm text-gray-400 font-bold italic leading-relaxed border-t border-zinc-800/50 pt-4"></div>
             </section>
-            
             <div id="stageContainer" class="space-y-2"></div>
         </div>
 
@@ -158,6 +101,7 @@
         if (!uID || !uName) window.location.href = '../index.html';
 
         function parseDay(d) {
+            if (!d) return "";
             if (!isNaN(d) && parseFloat(d) > 40000) {
                 const dateObj = new Date((parseFloat(d) - 25569) * 86400000);
                 return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
@@ -185,7 +129,7 @@
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
             const timestamp = now.toISOString();
-            const stageInfo = itineraryData.find(i => i.Day === day && i.Section === section);
+            const stageInfo = itineraryData.find(i => parseDay(i.Day) === day && i.Section === section);
             const locationName = (type === 'START') ? stageInfo.Start_Point : stageInfo.End_Point;
 
             try {
@@ -212,9 +156,10 @@
 
         function changeDay(day) {
             document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById(`tab-${day}`).classList.add('active');
+            const tab = document.getElementById(`tab-${day}`);
+            if(tab) tab.classList.add('active');
             
-            const dayData = itineraryData.filter(i => i.Day === day);
+            const dayData = itineraryData.filter(i => parseDay(i.Day) === day);
             const dLine = dayData.find(i => i.Section === "DayLine");
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
@@ -242,7 +187,7 @@
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
                     
-                    return `
+                    const html = `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
                                 <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
@@ -263,13 +208,7 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
-
-                                ${item.Description ? `
-                                <div class="ss-description-box">
-                                    <p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic tracking-[0.2em]">Pilot Notes / 領航備註</p>
-                                    <p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p>
-                                </div>` : ''}
-
+                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
                                     <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'}">${hasStart ? "已打卡" : "START 打卡"}</button>
@@ -290,30 +229,63 @@
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`);
                 const allChecks = await res.json();
                 const myRecords = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
-                let totalActualMin = 0; let totalKM = 0; let html = "";
-                ["4/27", "4/28", "4/29", "4/30", "5/1"].forEach(d => {
+                
+                let totalActualMin = 0;
+                let totalKM = 0;
+                let html = "";
+                
+                const targetDays = ["4/27", "4/28", "4/29", "4/30", "5/1"];
+                targetDays.forEach(d => {
                     const dayRecords = myRecords.filter(r => parseDay(r.Day) === d);
                     const sections = [...new Set(dayRecords.map(r => r.Section.trim()))];
-                    let dayKM = 0; let dayActualMin = 0;
+                    
+                    let dayKM = 0;
+                    let dayActualMin = 0;
+                    let sectionDetails = [];
+
                     sections.forEach(sec => {
                         const start = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'START');
                         const end = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'END');
-                        const info = itineraryData.find(i => i.Day === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
+                        
+                        // 修正：在 Itinerary 表中搜尋該航段里程，日期必須也要匹配
+                        const info = itineraryData.find(i => parseDay(i.Day) === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
+                        
+                        let actualTimeText = "Incomplete";
                         if (start && end) {
                             const diffMin = Math.floor((new Date(end.Timestamp) - new Date(start.Timestamp)) / 60000);
-                            if(diffMin > 0) { dayActualMin += diffMin; if(info) dayKM += (parseFloat(info.D) || 0); }
+                            if(diffMin >= 0) {
+                                dayActualMin += diffMin;
+                                actualTimeText = diffMin >= 60 ? `${Math.floor(diffMin/60)}h ${diffMin%60}m` : `${diffMin}m`;
+                                // 只有完成的 SS 才計入公里數
+                                if(info) dayKM += (parseFloat(info.D) || 0);
+                            }
+                        } else if (start) {
+                            actualTimeText = "Running...";
+                        }
+                        
+                        if(sec.startsWith("SS")) {
+                            sectionDetails.push(`${sec}<span class="record-sec-tag">(${actualTimeText})</span>`);
                         }
                     });
-                    totalActualMin += dayActualMin; totalKM += dayKM;
-                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1">
-                        <div><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
-                        <p class="font-black ${dayKM > 0 ? 'text-yellow-500' : 'text-zinc-800'} text-xs">${dayKM > 0 ? '✔️ DATA LOGGED' : '---'}</p></div>
-                        <div class="text-right">
-                            <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
-                            <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
-                        </div>
-                    </div>`;
+
+                    totalActualMin += dayActualMin;
+                    totalKM += dayKM;
+                    
+                    html += `
+                        <div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1">
+                            <div class="flex-1">
+                                <p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
+                                <div class="text-[10px] font-bold text-gray-400 leading-relaxed">
+                                    ${sectionDetails.length > 0 ? sectionDetails.join(' | ') : '---'}
+                                </div>
+                            </div>
+                            <div class="text-right ml-4">
+                                <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
+                                <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
+                            </div>
+                        </div>`;
                 });
+
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
                 document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${Math.round(totalActualMin%60)}m`;
                 splitArea.innerHTML = html;
