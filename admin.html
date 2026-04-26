@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>車隊指揮中心 - 看板模式</title>
+    <title>車隊指揮中心 - 實名監控</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { background-color: #f0f2f5; font-family: sans-serif; }
-        .user-card { transition: all 0.3s ease; }
-        .user-card:hover { transform: translateY(-2px); }
-        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+        .user-card { transition: all 0.3s ease; border-top-width: 6px; }
+        .user-card:hover { transform: translateY(-3px); shadow-lg; }
     </style>
 </head>
 <body class="p-6">
@@ -17,35 +16,47 @@
     <header class="bg-[#8B1A1A] text-white p-6 rounded-2xl shadow-xl mb-8 flex justify-between items-center">
         <div>
             <h1 class="text-2xl font-bold tracking-widest text-[#D4AF37]">陽光小屋車隊後台</h1>
-            <p class="text-[10px] uppercase font-bold opacity-80">Real-time Fleet Monitor</p>
+            <p class="text-[10px] uppercase font-bold opacity-80">Real-time Real-name Monitor</p>
         </div>
-        <div class="text-right">
-            <button onclick="fetchRecords()" class="bg-[#D4AF37] text-[#8B1A1A] px-4 py-2 rounded-lg font-bold text-sm shadow-md active:scale-95 transition-all">
-                同步數據 ↻
-            </button>
-        </div>
+        <button onclick="fetchAllData()" class="bg-[#D4AF37] text-[#8B1A1A] px-5 py-2 rounded-lg font-bold text-sm shadow-md active:scale-95 transition-all">
+            同步最新動態 ↻
+        </button>
     </header>
 
     <div id="fleetDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div class="col-span-full text-center py-20 text-gray-400 font-bold italic animate-pulse">正在掃描所有隊員即時位置...</div>
+        <div class="col-span-full text-center py-20 text-gray-400 font-bold italic animate-pulse">正在識別隊員身份並讀取位置...</div>
     </div>
 
     <script>
-        const API_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns';
+        const CHECKIN_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns';
+        const USER_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=Users';
 
-        async function fetchRecords() {
+        async function fetchAllData() {
             try {
-                const response = await fetch(API_URL);
-                const data = await response.json();
-                processFleetData(data);
+                // 同時讀取兩個表
+                const [checkinRes, userRes] = await Promise.all([
+                    fetch(CHECKIN_URL),
+                    fetch(USER_URL)
+                ]);
+                
+                const checkins = await checkinRes.json();
+                const users = await userRes.json();
+                
+                // 建立 ID 對應 姓名 的清單
+                const userMap = {};
+                users.forEach(u => {
+                    userMap[u.ID || u.id] = u.NAME || u.Name || "未知成員";
+                });
+
+                processFleetData(checkins, userMap);
             } catch (e) {
-                console.error("讀取紀錄失敗");
+                console.error("同步失敗", e);
             }
         }
 
-        function processFleetData(records) {
-            // 按隊員 ID 分組，並只保留該隊員最新的紀錄
+        function processFleetData(records, userMap) {
             const fleet = {};
+            // 分組紀錄
             records.forEach(reg => {
                 const id = reg.CustomerID;
                 if (!fleet[id]) fleet[id] = [];
@@ -55,57 +66,59 @@
             const container = document.getElementById('fleetDashboard');
             container.innerHTML = "";
 
-            Object.keys(fleet).forEach(id => {
+            const sortedIDs = Object.keys(fleet);
+
+            sortedIDs.forEach(id => {
                 const userRecords = fleet[id];
-                // 取得最後一筆打卡
                 const lastReg = userRecords[userRecords.length - 1];
                 const isFinished = lastReg.Type === 'END';
+                const driverName = userMap[id] || "訪客"; // 這裡抓到名字了！
 
                 const card = document.createElement('div');
-                card.className = "user-card bg-white rounded-2xl shadow-sm overflow-hidden border-t-4 " + (isFinished ? "border-green-500" : "border-blue-500");
+                card.className = `user-card bg-white rounded-2xl shadow-sm overflow-hidden ${isFinished ? "border-green-500" : "border-blue-500"}`;
                 card.innerHTML = `
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-4">
                             <div>
-                                <h3 class="text-xl font-black text-gray-800">${id}</h3>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Fleet Member</p>
+                                <h3 class="text-2xl font-black text-gray-800">${driverName}</h3>
+                                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">ID: ${id}</p>
                             </div>
-                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">
-                                ${isFinished ? '● 已到達終點' : '● 行進中'}
+                            <span class="px-2 py-1 rounded text-[10px] font-bold ${isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">
+                                ${isFinished ? '已抵達' : '行進中'}
                             </span>
                         </div>
                         
                         <div class="space-y-3">
-                            <div class="bg-gray-50 p-3 rounded-lg">
-                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">當前賽段</p>
-                                <div class="flex justify-between items-center">
-                                    <span class="font-bold text-gray-700">${lastReg.Section}</span>
-                                    <span class="text-xs font-black ${lastReg.Type === 'START' ? 'text-blue-500' : 'text-green-500'} italic">${lastReg.Type}</span>
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-[10px] text-gray-400 font-bold uppercase">當前賽段</span>
+                                    <span class="text-[10px] font-black ${lastReg.Type === 'START' ? 'text-blue-500' : 'text-green-500'}">${lastReg.Type}</span>
                                 </div>
+                                <p class="font-bold text-gray-700">${lastReg.Section}</p>
                             </div>
                             
                             <div>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後打卡地點</p>
-                                <p class="text-sm font-bold text-gray-800 leading-tight">${lastReg.LocationName}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後位置</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight h-10 overflow-hidden">${lastReg.LocationName}</p>
                             </div>
                             
-                            <div class="pt-2 border-t flex justify-between items-center text-[10px] text-gray-400 font-mono">
-                                <span>今日已打卡: ${userRecords.length} 次</span>
-                                <span>${lastReg.CheckIn_Time}</span>
+                            <div class="pt-2 border-t flex justify-between items-center text-[10px] text-gray-400">
+                                <span>今日紀錄: ${userRecords.length} 筆</span>
+                                <span class="font-mono text-[#8B1A1A] font-bold">${lastReg.CheckIn_Time}</span>
                             </div>
                         </div>
                     </div>
                     <div class="bg-gray-50 p-3 flex gap-2">
-                        <button onclick="alert('查無詳細 GPS 數據')" class="flex-1 py-2 bg-white border rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-100 transition-all">查看軌跡</button>
-                        <button onclick="location.href='certificate.html?id=${id}'" class="flex-1 py-2 bg-gray-800 text-white rounded-lg text-[10px] font-bold hover:bg-black transition-all">生成證書</button>
+                        <button onclick="location.href='certificate.html?id=${id}'" class="w-full py-2 bg-gray-800 text-[#D4AF37] rounded-lg text-xs font-bold hover:bg-black transition-all">生成完賽證書</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        setInterval(fetchRecords, 20000); // 每 20 秒自動刷新一次
-        fetchRecords();
+        // 啟動
+        fetchAllData();
+        setInterval(fetchAllData, 30000); // 30秒更新一次
     </script>
 </body>
 </html>
