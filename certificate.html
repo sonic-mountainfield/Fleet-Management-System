@@ -3,124 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陽光小屋 - 完賽榮譽證書</title>
+    <title>陽光小屋 - 西藏珠峰環線自駕證書</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        .cert-border { border: 25px solid #8B1A1A; outline: 6px solid #D4AF37; outline-offset: -18px; position: relative; }
-        .cert-bg { background-color: #fffaf0; background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); }
+        :root {
+            --tibet-red: #8B1A1A;
+            --tibet-gold: #D4AF37;
+            --tech-blue: #00f2ff;
+        }
+        body { background-color: #1a1a1a; font-family: sans-serif; }
+        .cert-outer { 
+            background: #fff;
+            position: relative;
+            border: 15px solid var(--tibet-red);
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+        }
+        .cert-inner {
+            border: 2px solid var(--tibet-gold);
+            margin: 10px;
+            padding: 40px;
+            position: relative;
+            background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
+        }
+        /* 科技感背景底紋 */
+        .tech-grid {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: radial-gradient(var(--tibet-gold) 1px, transparent 1px);
+            background-size: 30px 30px;
+            opacity: 0.05;
+            pointer-events: none;
+        }
         .tibet-font { font-family: 'Noto Serif TC', serif; }
-        .hand-font { font-family: 'Zhi Mang Xing', cursive; }
-        .stat-box { background: rgba(139, 26, 26, 0.05); border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.3); }
-        .map-container { background: white; border-radius: 24px; border: 2px dashed #D4AF37; position: relative; overflow: hidden; }
-        @media print { .no-print { display: none; } body { padding: 0; margin: 0; } }
+        .tech-font { font-family: 'Orbitron', sans-serif; }
+        
+        /* 地圖點位脈衝動畫 */
+        .map-dot { fill: var(--tibet-red); filter: drop-shadow(0 0 5px var(--tibet-gold)); }
+        .map-line { stroke: var(--tibet-gold); stroke-width: 3; fill: none; stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 3s forwards ease-in-out; }
+        
+        @keyframes draw { to { stroke-dashoffset: 0; } }
+        @media print { .no-print { display: none; } body { background: white; padding: 0; } .cert-outer { box-shadow: none; border-width: 10px; } }
     </style>
 </head>
-<body class="bg-gray-100 p-4">
+<body class="p-4 md:p-10">
 
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-lg mb-8 no-print border-2 border-[#D4AF37]">
-        <h2 class="font-bold mb-4 text-[#8B1A1A] flex items-center gap-2 text-xl">🏆 製作榮譽證書</h2>
-        <div class="flex gap-4">
-            <input type="text" id="searchID" placeholder="輸入駕駛員 ID (如: U100)" class="flex-1 border-2 border-gray-200 p-4 rounded-xl outline-none focus:border-[#8B1A1A] transition-all font-black text-lg">
-            <button onclick="generateFinalCert()" class="bg-[#8B1A1A] text-[#D4AF37] px-10 py-4 rounded-xl font-black shadow-lg hover:bg-black active:scale-95 transition-all text-lg">生成</button>
+    <div class="max-w-xl mx-auto bg-white/10 backdrop-blur-md p-6 rounded-2xl mb-10 no-print border border-white/20">
+        <div class="flex flex-col gap-4">
+            <h2 class="text-white font-bold text-center italic tracking-widest">SUNNY HOUSE COMMAND CENTER</h2>
+            <div class="flex gap-2">
+                <input type="text" id="searchID" placeholder="輸入隊員 ID (如: U100)" class="flex-1 bg-black/20 border-2 border-[#D4AF37]/50 text-white p-3 rounded-lg outline-none focus:border-[#D4AF37]">
+                <button onclick="generateTechCert()" class="bg-[#8B1A1A] text-[#D4AF37] px-6 py-3 rounded-lg font-black hover:bg-black transition-all">生成證書</button>
+            </div>
         </div>
     </div>
 
-    <div id="certificateView" class="max-w-4xl mx-auto cert-bg cert-border p-10 md:p-16 shadow-2xl hidden relative">
-        
-        <div class="absolute right-[-20px] bottom-0 opacity-5 pointer-events-none">
-             <img src="https://img.icons8.com/color/512/mountain.png" class="w-96">
-        </div>
-
-        <div class="text-center relative z-10">
-            <h1 class="text-6xl tibet-font text-[#8B1A1A] mb-2 tracking-widest">完賽榮譽證書</h1>
-            <p class="text-[#D4AF37] tracking-[0.6em] font-black mb-10 uppercase text-xs">Certificate of Achievement</p>
+    <div id="certContainer" class="max-w-5xl mx-auto cert-outer hidden">
+        <div class="cert-inner">
+            <div class="tech-grid"></div>
             
-            <div class="text-left space-y-6 text-gray-800 mb-10">
-                <p class="text-3xl">
-                    尊敬的 <span id="certName" class="text-5xl font-black border-b-4 border-[#D4AF37] px-4 text-black hand-font">---</span> 駕駛員：
-                </p>
-                <p class="text-lg leading-loose indent-10 font-medium">
-                    在 <span id="certTotalDays" class="font-bold text-[#8B1A1A]">--</span> 天的極限挑戰中，您憑藉卓越意志與精湛車技，圓滿完成「陽光小屋車隊」西藏巡航任務。成功穿越高原險阻，環繞神山聖湖，特頒此證以資紀念。扎西德勒！
-                </p>
-            </div>
-
-            <div class="grid grid-cols-3 gap-6 mb-8">
-                <div class="stat-box p-5 text-center">
-                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">冒險總里程</p>
-                    <h3 class="text-3xl font-black text-[#8B1A1A]"><span id="certDist">--</span><span class="text-sm ml-1 font-bold">KM</span></h3>
+            <div class="flex justify-between items-start mb-12 relative z-10">
+                <div class="flex items-center gap-4">
+                    <div class="w-16 h-16 bg-[#8B1A1A] rounded-full flex items-center justify-center border-2 border-[#D4AF37] shadow-lg">
+                        <span class="text-[#D4AF37] font-black text-xs text-center">陽光<br>小屋</span>
+                    </div>
+                    <div>
+                        <h3 class="tech-font text-[10px] font-bold text-gray-400 tracking-[0.3em]">SUNNY HOUSE ADVENTURE</h3>
+                        <p class="text-xs font-bold text-[#8B1A1A]">西藏珠峰環線自駕挑戰賽</p>
+                    </div>
                 </div>
-                <div class="stat-box p-5 text-center">
-                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">完成賽段</p>
-                    <h3 class="text-3xl font-black text-[#8B1A1A]"><span id="certSS">--</span><span class="text-sm ml-1 font-bold">STAGES</span></h3>
-                </div>
-                <div class="stat-box p-5 text-center">
-                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">駕駛時數</p>
-                    <h3 class="text-3xl font-black text-[#8B1A1A]"><span id="certTime">--</span></h3>
+                <div class="text-right">
+                    <h1 class="text-5xl tibet-font text-[#8B1A1A] tracking-tighter">完賽榮譽證書</h1>
+                    <p class="tech-font text-[10px] text-[#D4AF37] tracking-[0.5em] mt-2">CERTIFICATE OF ACHIEVEMENT</p>
                 </div>
             </div>
 
-            <div class="map-container w-full h-[320px] mb-12 bg-white shadow-inner flex flex-col items-center justify-center">
-                <div class="absolute top-4 left-6 text-[10px] font-black text-gray-300 uppercase italic tracking-widest">Adventure Loop Track</div>
-                <svg viewBox="0 0 800 400" class="w-full h-full p-6">
-                    <path id="fullPath" d="M400,320 C250,320 100,280 100,200 C100,120 250,80 400,80 C550,80 700,120 700,200 C700,280 550,320 400,320" fill="none" stroke="#e5e7eb" stroke-width="12" stroke-linecap="round" />
-                    <path id="donePath" d="M400,320 C250,320 100,280 100,200 C100,120 250,80 400,80 C550,80 700,120 700,200 C700,280 550,320 400,320" fill="none" stroke="#D4AF37" stroke-width="12" stroke-linecap="round" stroke-dasharray="2000" stroke-dashoffset="2000" style="transition: stroke-dashoffset 2s ease-in-out;" />
+            <div class="mb-12 relative z-10 leading-loose">
+                <p class="text-xl text-gray-800">
+                    尊敬的 <span id="certName" class="text-3xl font-black border-b-4 border-[#D4AF37] px-6 mx-2 text-black">---</span> 隊員：
+                </p>
+                <p class="text-lg text-gray-600 mt-6 indent-12">
+                    在本次「西藏珠峰環線」極限自駕壯遊中，您憑藉卓越的勇氣與精湛的車技，成功穿越世界屋脊。完成總計 <span id="certSS" class="font-bold text-[#8B1A1A]">--</span> 個精密打卡賽段，征服平均海拔 4,000 公尺以上的艱險路況。
+                </p>
+            </div>
+
+            <div class="relative w-full h-[350px] bg-gray-50 rounded-3xl mb-12 border border-gray-200 shadow-inner overflow-hidden">
+                <div class="absolute top-4 left-6 tech-font text-[10px] text-gray-300 tracking-widest uppercase">Real-time Route Telemetry</div>
+                
+                <svg viewBox="0 0 1000 400" class="w-full h-full p-8">
+                    <defs>
+                        <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                    </defs>
+
+                    <path d="M850,50 L750,150 L650,50 L550,150 L400,80 L250,150 L100,320 L250,350 L450,280 L650,350 L850,50" stroke="#eee" stroke-width="8" fill="none" stroke-linecap="round" />
                     
-                    <g transform="translate(400,320)">
-                        <circle r="10" fill="#8B1A1A" stroke="white" stroke-width="2"/>
-                        <text y="35" text-anchor="middle" class="text-[14px] font-black fill-gray-800">拉薩 (凱旋)</text>
-                        <text y="-5" text-anchor="middle" class="text-[12px] fill-white">🚩</text>
-                    </g>
-                    <g transform="translate(200,290)">
-                        <circle r="8" fill="#D4AF37" id="dot-羊卓雍措"/>
-                        <text x="-15" y="25" text-anchor="end" class="text-[12px] font-bold fill-gray-500">羊卓雍措</text>
-                    </g>
-                    <g transform="translate(100,200)">
-                        <circle r="8" fill="#D4AF37" id="dot-江孜"/>
-                        <text x="-15" y="5" text-anchor="end" class="text-[12px] font-bold fill-gray-500">江孜</text>
-                    </g>
-                    <g transform="translate(200,110)">
-                        <circle r="8" fill="#D4AF37" id="dot-日喀則"/>
-                        <text x="-15" y="-15" text-anchor="end" class="text-[12px] font-bold fill-gray-500">日喀則</text>
-                    </g>
-                    <g transform="translate(400,80)">
-                        <circle r="8" fill="#D4AF37" id="dot-拉孜"/>
-                        <text y="-25" text-anchor="middle" class="text-[12px] font-bold fill-gray-500">拉孜</text>
-                    </g>
-                    <g transform="translate(600,110)">
-                        <circle r="12" fill="#8B1A1A" stroke="#D4AF37" stroke-width="2" id="dot-珠峰"/>
-                        <text x="20" y="-15" text-anchor="start" class="text-[14px] font-black fill-[#8B1A1A]">珠峰大本營 🏔️</text>
-                    </g>
-                    <g transform="translate(700,200)">
-                        <circle r="8" fill="#D4AF37" id="dot-回程"/>
-                        <text x="15" y="5" text-anchor="start" class="text-[12px] font-bold fill-gray-500">雅江河谷</text>
-                    </g>
+                    <path class="map-line" d="M850,50 L750,150 L650,50 L550,150 L400,80 L250,150 L100,320 L250,350 L450,280 L650,350 L850,50" filter="url(#glow)" />
 
-                    <image id="carIcon" href="https://img.icons8.com/color/96/sport-utility-vehicle.png" x="0" y="0" height="40" width="40" style="visibility: hidden;" />
+                    <g class="map-dot">
+                        <circle cx="850" cy="50" r="8" /> <text x="865" y="55" class="text-[14px] font-bold fill-[#8B1A1A]">拉薩</text>
+                        <circle cx="750" cy="150" r="5" /> <text x="740" y="175" class="text-[10px] fill-gray-500">曲水</text>
+                        <circle cx="650" cy="50" r="5" /> <text x="640" y="40" class="text-[10px] fill-gray-500">日喀則</text>
+                        <circle cx="550" cy="150" r="5" /> <text x="540" y="175" class="text-[10px] fill-gray-500">拉孜</text>
+                        <circle cx="400" cy="80" r="5" /> <text x="390" y="70" class="text-[10px] fill-gray-500">定日</text>
+                        <circle cx="250" cy="150" r="10" fill="#8B1A1A" /> <text x="180" y="145" class="text-[12px] font-black fill-[#8B1A1A]">珠峰大本營</text>
+                        <circle cx="100" cy="320" r="5" /> <text x="80" y="345" class="text-[10px] fill-gray-500">樟木</text>
+                        <circle cx="250" cy="350" r="5" /> <text x="240" y="375" class="text-[10px] fill-gray-500">定結</text>
+                        <circle cx="450" cy="280" r="8" /> <text x="440" y="305" class="text-[12px] font-bold fill-gray-500">江孜</text>
+                        <circle cx="650" cy="350" r="8" /> <text x="640" y="375" class="text-[12px] font-bold fill-gray-500">羊卓雍措</text>
+                    </g>
                 </svg>
             </div>
 
-            <div class="flex justify-between items-end px-4">
-                <div class="text-left text-[10px] font-bold text-gray-400 space-y-1">
-                    <p>認證日期：<span id="certDate">---</span></p>
-                    <p>證書編號：SHF-<span id="certNo">---</span></p>
-                </div>
-                <div class="text-center">
-                    <div class="w-32 h-32 border-4 border-[#8B1A1A] rounded-full flex items-center justify-center mb-2 mx-auto relative rotate-[-12deg] bg-white shadow-lg">
-                        <div class="text-[#8B1A1A] font-black text-[12px] leading-tight">陽光小屋<br>西藏自駕<br>官方認證</div>
+            <div class="flex justify-between items-end relative z-10">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-8 bg-gray-100 p-4 rounded-xl border-l-4 border-[#8B1A1A]">
+                        <div>
+                            <p class="tech-font text-[9px] text-gray-400">TOTAL DISTANCE</p>
+                            <p class="text-xl font-black text-gray-800"><span id="certDist">--</span> <small class="text-xs">KM</small></p>
+                        </div>
+                        <div>
+                            <p class="tech-font text-[9px] text-gray-400">DRIVING TIME</p>
+                            <p class="text-xl font-black text-gray-800"><span id="certTime">--</span></p>
+                        </div>
                     </div>
-                    <p class="font-black text-2xl tibet-font text-[#8B1A1A]">總管家 敬上</p>
+                    <div class="text-[10px] text-gray-400 font-mono">
+                        <p>證書編號：SHF-<span id="certNo">---</span></p>
+                        <p>認證日期：<span id="certDate">---</span></p>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-center">
+                    <div class="w-32 h-32 border-4 border-[#8B1A1A] rounded-full flex items-center justify-center mb-2 rotate-[-15deg] bg-white/50 backdrop-blur-sm shadow-xl">
+                        <div class="text-center">
+                            <p class="text-[#8B1A1A] font-black text-[10px] leading-tight italic">SUNNY HOUSE<br>TIBET OFFICIAL<br>CERTIFIED</p>
+                        </div>
+                    </div>
+                    <p class="tibet-font text-2xl text-[#8B1A1A] font-bold">總管家 敬上</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="text-center mt-12 no-print">
-        <button onclick="window.print()" class="bg-[#8B1A1A] text-[#D4AF37] px-12 py-5 rounded-full font-black shadow-2xl hover:scale-105 transition-all text-xl">🖨️ 列印證書 / 存為 PDF</button>
+    <div class="text-center mt-10 no-print">
+        <button onclick="window.print()" class="bg-gray-800 text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:scale-105 transition-all">列印或儲存為 PDF</button>
     </div>
 
     <script>
-        async function generateFinalCert() {
+        async function generateTechCert() {
             const id = document.getElementById('searchID').value.toUpperCase().trim();
             if(!id) return alert("請輸入 ID");
 
@@ -155,43 +184,16 @@
                     }
                 });
 
-                const dates = records.map(r => new Date(r.Day)).sort((a,b) => a-b);
-                const diffTime = Math.abs(dates[dates.length - 1] - dates[0]);
-                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-
-                // 渲染文字數據
                 document.getElementById('certName').innerText = userName;
-                document.getElementById('certTotalDays').innerText = diffDays;
                 document.getElementById('certDist').innerText = totalDist.toFixed(1);
                 document.getElementById('certSS').innerText = doneSections.length;
                 document.getElementById('certTime').innerText = `${Math.floor(totalMin/60)}h ${totalMin%60}m`;
                 document.getElementById('certDate').innerText = new Date().toLocaleDateString();
                 document.getElementById('certNo').innerText = Math.floor(1000 + Math.random() * 8999);
 
-                document.getElementById('certificateView').classList.remove('hidden');
+                document.getElementById('certContainer').classList.remove('hidden');
                 
-                // 動態地圖動畫
-                animateMap(doneSections.length, 6); // 假設總賽段為 6
-
-            } catch (e) { alert("生成失敗"); }
-        }
-
-        function animateMap(done, total) {
-            const path = document.getElementById('donePath');
-            const car = document.getElementById('carIcon');
-            const length = path.getTotalLength();
-            
-            // 計算完賽比例 (最高 1)
-            const progress = Math.min(done / total, 1);
-            
-            path.style.strokeDashoffset = length * (1 - progress);
-            
-            if (progress > 0) {
-                car.style.visibility = "visible";
-                const point = path.getPointAtLength(length * progress);
-                car.setAttribute("x", point.x - 20);
-                car.setAttribute("y", point.y - 40);
-            }
+            } catch (e) { alert("數據同步失敗"); }
         }
     </script>
 </body>
