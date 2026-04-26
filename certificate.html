@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陽光小屋 - 榮譽證書生成器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap');
+        .cert-border { border: 20px solid #8B1A1A; outline: 5px solid #D4AF37; outline-offset: -15px; }
+        .cert-bg { background-color: #fffaf0; background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); }
+        .tibet-font { font-family: 'Noto Serif TC', serif; }
+    </style>
+</head>
+<body class="bg-gray-200 p-4">
+
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-8 no-print">
+        <h2 class="font-bold mb-4 text-gray-700">第一步：輸入隊員 ID 檢索紀錄</h2>
+        <div class="flex gap-4">
+            <input type="text" id="searchID" placeholder="例如：U001" class="flex-1 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-[#8B1A1A]">
+            <button onclick="generateCert()" class="bg-[#8B1A1A] text-white px-6 py-3 rounded-lg font-bold">生成證書</button>
+        </div>
+    </div>
+
+    <div id="certificateCapture" class="max-w-3xl mx-auto cert-bg cert-border p-16 relative shadow-2xl hidden">
+        <div class="text-center">
+            <img src="https://img.icons8.com/color/96/mountain.png" class="mx-auto mb-4 opacity-80">
+            <h1 class="text-5xl tibet-font text-[#8B1A1A] mb-2">榮譽證書</h1>
+            <p class="text-[#D4AF37] tracking-[0.5em] font-bold mb-12 uppercase">Certificate of Honor</p>
+            
+            <div class="text-left space-y-8 text-gray-800 leading-loose">
+                <p class="text-xl">
+                    尊敬的 <span id="certName" class="text-3xl font-black border-b-2 border-gray-400 px-4 text-black">--</span> 隊員：
+                </p>
+                <p class="text-lg indent-8">
+                    感謝您參與「陽光小屋車隊」西藏自駕壯遊。在本次行程中，您憑藉著無畏的勇氣與卓越的駕駛技術，成功穿越高原險阻，並完成所有指定的
+                    <span id="certSSCount" class="font-bold text-[#8B1A1A]">--</span> 個打卡賽段。
+                </p>
+                <p class="text-lg indent-8">
+                    特發此證，以資鼓勵您在海拔四千公尺以上的巔峰表現。扎西德勒！
+                </p>
+            </div>
+
+            <div class="mt-20 flex justify-between items-end">
+                <div class="text-left">
+                    <p class="text-sm text-gray-500 font-mono">證書編號：SHF-<span id="certNo">--</span></p>
+                    <p class="text-sm text-gray-500 font-mono">日期：<span id="certDate">--</span></p>
+                </div>
+                <div class="text-center">
+                    <div class="w-32 h-32 border-4 border-[#8B1A1A]/20 rounded-full flex items-center justify-center mb-2 mx-auto">
+                        <p class="text-[#8B1A1A] font-bold text-xs rotate-[-15deg]">陽光小屋<br>車隊指揮部</p>
+                    </div>
+                    <p class="font-bold text-xl tibet-font text-[#8B1A1A]">總管家 敬上</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-8 no-print">
+        <button onclick="window.print()" class="bg-gray-800 text-white px-8 py-3 rounded-full font-bold">列印 / 存為 PDF</button>
+    </div>
+
+    <script>
+        async function generateCert() {
+            const id = document.getElementById('searchID').value.trim();
+            if(!id) return alert("請輸入 ID");
+
+            try {
+                // 1. 抓取打卡紀錄
+                const res = await fetch(`https://sheetdb.io/api/v1/poo9epu17583p/search?CustomerID=${id}&sheet=CheckIns`);
+                const records = await res.json();
+
+                if(records.length === 0) return alert("查無此 ID 的完賽紀錄");
+
+                // 2. 獲取用戶姓名 (從第一筆紀錄抓取)
+                const userName = records[0].NAME || records[0].CustomerName || id;
+
+                // 3. 計算完成賽段數 (計算 Type 為 END 的數量)
+                const completedStages = [...new Set(records.filter(r => r.Type === 'END').map(r => r.Section))];
+
+                // 4. 填充資料到證書
+                document.getElementById('certName').innerText = userName;
+                document.getElementById('certSSCount').innerText = completedStages.length;
+                document.getElementById('certNo').innerText = Math.floor(Math.random()*9000) + 1000;
+                document.getElementById('certDate').innerText = new Date().toLocaleDateString();
+
+                // 5. 顯示證書
+                document.getElementById('certificateCapture').classList.remove('hidden');
+            } catch (e) {
+                alert("生成失敗，請確認網路或 API 狀態");
+            }
+        }
+    </script>
+    <style>
+        @media print { .no-print { display: none; } }
+    </style>
+</body>
+</html>
