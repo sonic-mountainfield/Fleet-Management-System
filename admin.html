@@ -11,8 +11,7 @@
         #routeMap { height: 450px; width: 100%; border-radius: 1.5rem; border: 4px solid #8B1A1A; z-index: 1; }
         .user-card { transition: all 0.3s ease; border-top-width: 6px; }
         .user-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
-        .leaflet-popup-content-wrapper { background: #8B1A1A; color: white; border: 1px solid #D4AF37; }
-        .leaflet-popup-tip { background: #8B1A1A; }
+        .member-marker { background: #8B1A1A; color: white; border: 2px solid #D4AF37; border-radius: 50%; padding: 5px; text-align: center; font-weight: bold; font-size: 10px; width: 30px !important; height: 30px !important; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -22,9 +21,11 @@
             <h1 class="text-3xl font-black tracking-widest text-[#D4AF37]">陽光小屋指揮中心</h1>
             <p class="text-xs uppercase font-bold opacity-80 tracking-[0.3em]">Fleet Command & Real-time Map</p>
         </div>
-        <button onclick="fetchAllData()" class="bg-[#D4AF37] text-[#8B1A1A] px-8 py-3 rounded-xl font-black text-sm shadow-lg active:scale-95 transition-all">
-            同步數據 ↻
-        </button>
+        <div class="flex gap-4">
+            <button onclick="fetchAllData()" class="bg-[#D4AF37] text-[#8B1A1A] px-8 py-3 rounded-xl font-black text-sm shadow-lg active:scale-95 transition-all">
+                同步數據 ↻
+            </button>
+        </div>
     </header>
 
     <div class="max-w-full mx-auto mb-10">
@@ -37,56 +38,57 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        const CHECKIN_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns';
-        const USER_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=Users';
+        const API_BASE = 'https://sheetdb.io/api/v1/j7wain8kbsyu9';
+        const CHECKIN_URL = `${API_BASE}?sheet=CheckIns`;
+        const USER_URL = `${API_BASE}?sheet=Users`;
+        const ITINERARY_URL = `${API_BASE}?sheet=Itinerary`;
 
-        // 1. 初始化地圖
-        const map = L.map('routeMap').setView([29.267, 88.881], 7);
+        let memberMarkers = L.layerGroup();
+
+        // 1. 初始化地圖 (以拉薩為中心)
+        const map = L.map('routeMap').setView([29.646, 91.117], 7);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap'
         }).addTo(map);
+        memberMarkers.addTo(map);
 
-        // 2. 定義環狀路線座標 (基於您的行程大約位置)
-        const stations = [
-            { id: "A0", name: "拉薩", pos: [29.646, 91.117] },
-            { id: "A1", name: "尼木", pos: [29.433, 90.166] },
-            { id: "A2", name: "日喀則", pos: [29.267, 88.881] },
-            { id: "A3", name: "定日", pos: [28.583, 87.083] },
-            { id: "A5", name: "珠峰", pos: [28.143, 86.848] },
-            { id: "A2", name: "江孜", pos: [28.917, 89.600] },
-            { id: "A3", name: "羊湖", pos: [28.933, 90.416] },
-            { id: "A0", name: "拉薩(終)", pos: [29.650, 91.120] }
-        ];
-
-        // 繪製固定路線
-        const routeLine = L.polyline(stations.map(s => s.pos), {
-            color: '#8B1A1A', weight: 4, opacity: 0.6, dashArray: '10, 10'
-        }).addTo(map);
-
-        stations.forEach(s => {
-            L.circleMarker(s.pos, {
-                radius: 5, fillColor: "#D4AF37", color: "#8B1A1A", weight: 2, fillOpacity: 1
-            }).addTo(map).bindPopup(`<b>${s.id} ${s.name}</b>`);
-        });
+        // 2. 預設座標點 (對應您的 Excel 站點)
+        const stationCoords = {
+            "拉薩": [29.646, 91.117],
+            "尼木": [29.433, 90.166],
+            "日喀則": [29.267, 88.881],
+            "定日": [28.583, 87.083],
+            "珠峰": [28.143, 86.848],
+            "大竹卡": [29.35, 89.65],
+            "江孜": [28.917, 89.600],
+            "羊湖": [28.933, 90.416]
+        };
 
         // 3. 數據同步邏輯
         async function fetchAllData() {
             try {
-                const [checkinRes, userRes] = await Promise.all([fetch(CHECKIN_URL), fetch(USER_URL)]);
+                const [checkinRes, userRes, itiRes] = await Promise.all([
+                    fetch(CHECKIN_URL), 
+                    fetch(USER_URL),
+                    fetch(ITINERARY_URL)
+                ]);
                 const checkins = await checkinRes.json();
                 const users = await userRes.json();
+                const itinerary = await itiRes.json();
                 
                 const userMap = {};
-                users.forEach(u => userMap[u.ID || u.id] = u.NAME || u.Name || "未知成員");
+                users.forEach(u => userMap[u.ID || u.id] = u.N || u.Name || "未知成員");
 
-                processFleetData(checkins, userMap);
+                processFleetData(checkins, userMap, itinerary);
             } catch (e) {
                 console.error("同步失敗", e);
             }
         }
 
-        function processFleetData(records, userMap) {
+        function processFleetData(records, userMap, itinerary) {
             const fleet = {};
+            memberMarkers.clearLayers(); // 清除地圖舊標點
+
             records.forEach(reg => {
                 const id = reg.CustomerID;
                 if (!fleet[id]) fleet[id] = [];
@@ -101,6 +103,24 @@
                 const lastReg = userRecords[userRecords.length - 1];
                 const isFinished = lastReg.Type === 'END';
                 const driverName = userMap[id] || id;
+
+                // 找尋當前賽段的位置名稱
+                const stageInfo = itinerary.find(i => i.Section === lastReg.Section && i.Day === lastReg.Day);
+                const locName = lastReg.Type === 'START' ? stageInfo?.Start_Point : stageInfo?.End_Point;
+
+                // 地圖標點邏輯 (模糊匹配座標)
+                for (let key in stationCoords) {
+                    if (locName && locName.includes(key)) {
+                        const icon = L.divIcon({
+                            className: 'member-marker',
+                            html: driverName.substring(0, 1), // 顯示姓名首字
+                        });
+                        L.marker(stationCoords[key], { icon: icon })
+                            .bindPopup(`<b>${driverName}</b><br>${lastReg.Section} (${lastReg.Type})`)
+                            .addTo(memberMarkers);
+                        break;
+                    }
+                }
 
                 // 生成看板卡片
                 const card = document.createElement('div');
@@ -126,16 +146,13 @@
                             </div>
                             <div>
                                 <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後打卡位置</p>
-                                <p class="text-sm font-bold text-gray-800 leading-tight">${lastReg.LocationName}</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight">${locName || '座標同步中'}</p>
                             </div>
                             <div class="pt-4 border-t flex justify-between items-center text-xs">
                                 <span class="text-gray-400 font-mono">紀錄: ${userRecords.length} 筆</span>
-                                <span class="font-black text-[#8B1A1A] bg-red-50 px-2 py-1 rounded">${lastReg.CheckIn_Time}</span>
+                                <span class="font-black text-[#8B1A1A] bg-red-50 px-2 py-1 rounded">${lastReg.Time || '--:--'}</span>
                             </div>
                         </div>
-                    </div>
-                    <div class="p-4 bg-gray-50 border-t border-gray-100">
-                        <button onclick="location.href='certificate.html?id=${id}'" class="w-full py-3 bg-[#8B1A1A] text-[#D4AF37] rounded-xl font-black text-xs hover:bg-black transition-all shadow-md">生成證書</button>
                     </div>
                 `;
                 container.appendChild(card);
@@ -143,7 +160,7 @@
         }
 
         fetchAllData();
-        setInterval(fetchAllData, 30000);
+        setInterval(fetchAllData, 30000); // 30秒自動刷新
     </script>
 </body>
 </html>
