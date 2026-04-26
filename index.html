@@ -3,17 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SunnyHouse Tours - 系統啟動</title>
+    <title>SunnyHouse Tours - 啟動系統</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; margin: 0; overflow: hidden; }
-        .tech-font { font-family: 'Orbitron', sans-serif; }
         .login-card { background: #1a1a1a; border: 2px solid #8B1A1A; border-radius: 2.5rem; box-shadow: 0 0 40px rgba(139, 26, 26, 0.4); }
-        .input-box { background: #262626; border: 2px solid #404040; color: white; text-align: center; font-size: 1.5rem; letter-spacing: 0.1em; transition: 0.3s; }
+        .input-box { background: #262626; border: 2px solid #404040; color: white; text-align: center; font-size: 1.5rem; letter-spacing: 0.1em; }
         .input-box:focus { border-color: #D4AF37; outline: none; background: #333; }
-        .btn-glow { background: #8B1A1A; transition: 0.3s; box-shadow: 0 5px 20px rgba(139, 26, 26, 0.5); }
-        .btn-glow:active { transform: scale(0.95); }
+        .btn-glow { background: #8B1A1A; box-shadow: 0 5px 20px rgba(139, 26, 26, 0.5); }
         .logo-text { color: white; font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 14px; line-height: 1.2; text-align: center; text-transform: uppercase; }
     </style>
 </head>
@@ -27,39 +25,31 @@
                 </div>
             </div>
             <h1 class="text-white text-3xl font-black mb-1 tracking-widest">陽光小屋車隊</h1>
-            <p class="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-12 opacity-80">Tibet Self-Drive</p>
+            <p class="text-[#D4AF37] text-xs font-bold uppercase tracking-[0.3em] mb-12">Tibet Self-Drive</p>
 
             <div class="space-y-6">
                 <div class="text-left">
                     <label class="text-gray-400 text-xs font-black mb-3 block text-center uppercase tracking-widest">請輸入您的出生年月日 (YYYYMMDD)</label>
-                    <input type="number" id="birthday" placeholder="例如：19990427" 
-                        class="input-box w-full p-5 rounded-2xl font-black placeholder:text-gray-700">
+                    <input type="number" id="birthday" placeholder="例如：19990427" class="input-box w-full p-5 rounded-2xl font-black">
                 </div>
-                <button onclick="handleLogin()" id="loginBtn" class="btn-glow w-full py-5 text-white font-black rounded-2xl text-xl tracking-widest">啟動終端</button>
+                <button onclick="handleLogin()" id="loginBtn" class="btn-glow w-full py-5 text-white font-black rounded-2xl text-xl tracking-widest active:scale-95 transition-all">啟動終端</button>
             </div>
-            <p class="mt-12 text-[10px] text-gray-700 font-bold tracking-widest">© SUNNY HOUSE FLEET</p>
         </div>
     </div>
 
     <script>
-        const API_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=Users';
+        const API_URL = 'https://sheetdb.io/api/v1/j7wain8kbsyu9?sheet=Users';
 
         async function handleLogin() {
             const passInput = document.getElementById('birthday').value.trim();
             const btn = document.getElementById('loginBtn');
-            if (!passInput || passInput.length !== 8) {
-                alert("請輸入正確的 8 位數生日格式 (YYYYMMDD)");
-                return;
-            }
+            if (!passInput || passInput.length !== 8) { alert("請輸入 8 位數生日格式 (YYYYMMDD)"); return; }
+            
             btn.disabled = true;
-            btn.innerText = "衛星驗證中...";
+            btn.innerText = "驗證中...";
             try {
                 const response = await fetch(API_URL);
-                if (response.status === 403) {
-                    alert("⚠️ 流量已達上限 (403)，請更換 API 或聯繫管理員。");
-                    btn.disabled = false; btn.innerText = "啟動終端";
-                    return;
-                }
+                if (!response.ok) throw new Error("API Error");
                 const users = await response.json();
                 const user = users.find(u => String(u.Birthday) === passInput);
                 if (user) {
@@ -67,13 +57,10 @@
                     localStorage.setItem('driverName', user.N);
                     window.location.href = './src/main.html';
                 } else {
-                    alert("查無此隊員資料");
+                    alert("查無隊員資料，請確認生日");
                     btn.disabled = false; btn.innerText = "啟動終端";
                 }
-            } catch (error) {
-                alert("網路連線失敗");
-                btn.disabled = false; btn.innerText = "啟動終端";
-            }
+            } catch (e) { alert("連線失敗，請檢查網路或 API 狀態"); btn.disabled = false; btn.innerText = "啟動終端"; }
         }
     </script>
 </body>
