@@ -33,33 +33,32 @@
         /* 卡片設計 */
         .stage-card { background: #141414; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.5rem; overflow: hidden; }
         
-        /* 1. Note 區塊文字方塊化 */
+        /* 1. Note 區塊文字方塊化樣式 */
         .note-container {
-            background: rgba(212, 175, 55, 0.08);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            border-left: 6px solid #D4AF37;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            border-left: 8px solid #D4AF37;
             border-radius: 1.2rem;
-            padding: 1.2rem;
+            padding: 1.5rem;
             margin-bottom: 1.5rem;
         }
 
-        /* 2. SS 描述文字盒 */
+        /* 2. SS 描述文字盒：Pilot Notes */
         .ss-description-box {
-            background: rgba(255, 255, 255, 0.05);
-            border-left: 4px solid #8B1A1A;
-            padding: 1rem;
-            border-radius: 0 1rem 1rem 0;
-            margin-bottom: 1.2rem;
-            border-top: 1px solid #222;
-            border-right: 1px solid #222;
-            border-bottom: 1px solid #222;
+            background: rgba(139, 26, 26, 0.08);
+            border: 1px solid rgba(139, 26, 26, 0.3);
+            border-left: 6px solid #8B1A1A;
+            padding: 1.2rem;
+            border-radius: 0 1.2rem 1.2rem 0;
+            margin-top: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
         
-        .btn-full-day { background: #2563eb; color: #fff; padding: 10px 20px; border-radius: 10px; font-weight: 900; font-size: 0.8rem; }
+        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
@@ -203,7 +202,7 @@
                     <div class="flex items-center"><span class="route-label label-finish">Finish</span>${dLine.End_Point}</div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
-                // 修復每日 Description 顯示
+                // 修復：每日總體 Description 顯示邏輯
                 document.getElementById('dayDescription').innerText = dLine.Description || "";
             }
 
@@ -211,19 +210,20 @@
             let ssCounter = 0;
             document.getElementById('stageContainer').innerHTML = mainContent.map((item) => {
                 if (item.Section === "Note") {
+                    // Note 方塊化渲染
                     return `
                         <div class="note-container">
-                            <div class="flex justify-between items-center mb-2 text-[#D4AF37]">
-                                <span class="tech-font font-black text-[10px] uppercase tracking-widest">General Note</span>
-                                <span class="text-[10px] opacity-60 tech-font">${item.T || ''}</span>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="tech-font text-[#D4AF37] text-[10px] font-black uppercase tracking-widest italic">Pilot Briefing</span>
+                                <span class="text-[10px] text-gray-500 font-bold tech-font">${item.T || ''}</span>
                             </div>
-                            <div class="text-sm font-bold text-gray-300 leading-relaxed">${item.Description || ''}</div>
+                            <div class="text-sm font-black text-white leading-relaxed">${item.Description || ''}</div>
                         </div>`;
                 } else if (item.Section.startsWith("SS")) {
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
                     
-                    const html = `
+                    return `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
                                 <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
@@ -247,8 +247,8 @@
 
                                 ${item.Description ? `
                                 <div class="ss-description-box">
-                                    <p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p>
-                                    <p class="text-xs font-bold text-gray-400 leading-relaxed">${item.Description}</p>
+                                    <p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic tracking-[0.2em]">Pilot Notes / 領航備註</p>
+                                    <p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p>
                                 </div>` : ''}
 
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
