@@ -17,7 +17,7 @@
         /* 藏式風格卡片 */
         .tibet-card { border-top: 6px solid #D4AF37; border-bottom: 6px solid #8B1A1A; }
         
-        /* 總路線卡片樣式 */
+        /* 總路線卡片樣式 (藍色系) */
         .dayline-card { border-top: 6px solid #3385ff; border-bottom: 6px solid #3385ff; background-color: #f0f7ff; }
         
         /* 分頁標籤啟用樣式 */
@@ -149,22 +149,41 @@
                     return `
                     <div class="dayline-card bg-white rounded-2xl shadow-xl p-6 relative mb-8 border-l-8 border-[#3385ff]">
                         <div class="flex justify-between items-center mb-4">
-                            <span class="bg-[#3385ff] text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase">Day Route</span>
-                            <span class="text-[#3385ff] font-black text-sm">今日總路線</span>
+                            <span class="bg-[#3385ff] text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">Day Total Route</span>
+                            <span class="text-[#3385ff] font-black text-sm">今日路線概覽</span>
                         </div>
-                        <div class="bg-blue-50 p-4 rounded-xl">
-                            <h4 class="font-black text-blue-900 text-lg">${title}</h4>
-                            <div class="flex gap-6 mt-3 text-xs text-blue-700 font-bold">
-                                <span>總里程: ${dist}</span> <span>總時間: ${ss.Est_Time || '--'}</span>
+
+                        <div class="bg-blue-50 p-5 rounded-xl border border-blue-100">
+                            <h4 class="font-black text-blue-900 text-xl mb-4">${title}</h4>
+                            
+                            <div class="space-y-2 mb-4 border-b border-blue-200 pb-4">
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 bg-black text-white text-[10px] rounded flex items-center justify-center font-bold">A0</span>
+                                    <span class="text-sm font-bold text-blue-800">${ss.Start_Point || '未設定起點'}</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="w-5 h-5 bg-black text-white text-[10px] rounded flex items-center justify-center font-bold">A1</span>
+                                    <span class="text-sm font-bold text-blue-800">${ss.End_Point || '未設定終點'}</span>
+                                </div>
                             </div>
+
+                            <div class="flex gap-6 text-xs text-blue-700 font-bold mb-4">
+                                <span>📏 總里程: ${dist}</span>
+                                <span>⏱️ 總時間: ${ss.Est_Time || '--'}</span>
+                            </div>
+
+                            <div class="bg-white/60 p-3 rounded-lg border border-blue-200 mb-5 text-left">
+                                <p class="text-[10px] font-black text-blue-400 uppercase mb-1">📋 Note / 注意事項</p>
+                                <p class="text-xs text-blue-900 leading-relaxed font-medium">${ss.Description || '今日無特殊注意事項，扎西德勒！'}</p>
+                            </div>
+
                             <button onclick="window.launchNavigation('${ss.Amap_Link}')" 
-                                    class="w-full mt-5 bg-[#3385ff] text-white py-4 rounded-xl font-bold text-sm flex justify-center gap-3 shadow-lg active:scale-95 transition-all">
+                                    class="w-full bg-[#3385ff] text-white py-4 rounded-xl font-bold text-sm flex justify-center gap-3 shadow-lg active:scale-95 transition-all">
                                 <img src="https://img.icons8.com/color/48/amap.png" class="h-5 w-5">開啟全程導航
                             </button>
                         </div>
                     </div>`;
                 } else {
-                    // 檢查本地打卡紀錄
                     const startKey = `checkin_${day}_${sect}_START`;
                     const endKey = `checkin_${day}_${sect}_END`;
                     const isStartDone = localStorage.getItem(startKey) === 'true';
@@ -178,14 +197,15 @@
                             <span class="text-gray-400 font-bold text-xs">${sect}</span>
                         </div>
                         <div class="flex items-start gap-4 mb-8 relative z-10">
-                            <div class="w-8 h-8 bg-black text-white rounded flex items-center justify-center font-black text-xs shadow-lg">A0</div>
+                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A0</div>
                             <div class="flex-1 text-md font-bold text-gray-800">${ss.Start_Point || '起點'}</div>
                         </div>
                         <div class="flex items-start gap-4 mb-8 relative z-10">
-                            <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${sect}</div>
-                            <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
+                            <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${sect}</div>
+                            <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 text-left">
                                 <h4 class="font-black text-[#8B1A1A] text-md">${title}</h4>
                                 <p class="text-[11px] text-gray-500 font-bold mt-1">里程: ${dist} | 預計: ${ss.Est_Time || '--'}</p>
+                                <p class="text-[11px] text-gray-400 mt-2 italic leading-relaxed">${ss.Description || ''}</p>
                                 <button onclick="window.launchNavigation('${ss.Amap_Link}')" 
                                         class="w-full mt-4 bg-gray-800 text-white py-3 rounded-xl font-bold text-xs flex justify-center gap-2 shadow-lg">導航至此段</button>
                             </div>
@@ -230,7 +250,7 @@
                 btn.innerText = `✓ ${type === 'START' ? 'A0' : 'A1'} 已打卡`;
                 btn.classList.remove('bg-[#8B1A1A]', 'text-[#8B1A1A]', 'border-[#8B1A1A]');
                 btn.classList.add('bg-gray-300', 'text-gray-500', 'cursor-not-allowed', 'border-0');
-                alert(`打卡成功！數據已寫入紀錄。`);
+                alert(`打卡成功！數據已安全寫入系統。`);
             } else {
                 btn.innerText = originalText;
                 btn.disabled = false;
