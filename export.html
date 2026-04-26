@@ -3,40 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>數據導出中心 - 陽光小屋</title>
+    <title>數據導出中心 - 陽光小屋 (六日全數據)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f8f9fa; font-family: sans-serif; }
-        th { background-color: #8B1A1A; color: #D4AF37; }
+        body { background-color: #f3f4f6; font-family: sans-serif; }
+        th { background-color: #8B1A1A; color: #D4AF37; white-space: nowrap; font-size: 12px; }
+        td { font-size: 12px; border: 1px solid #e5e7eb; }
+        .bg-summary { background-color: #fff7ed; }
     </style>
 </head>
-<body class="p-8">
-    <div class="max-w-7xl mx-auto">
-        <header class="flex justify-between items-center mb-8">
+<body class="p-4 md:p-8">
+    <div class="max-w-[95%] mx-auto">
+        <header class="flex justify-between items-center mb-8 bg-white p-6 rounded-2xl shadow-sm">
             <div>
-                <h1 class="text-3xl font-black text-gray-800">證書數據整合中心</h1>
-                <p class="text-gray-500">自動彙整駕駛員姓名、完賽里程與時間</p>
+                <h1 class="text-2xl font-black text-gray-800 border-l-4 border-[#8B1A1A] pl-4">西藏珠峰環線 - 證書數據中心</h1>
+                <p class="text-gray-500 text-sm mt-1">涵蓋 4/26 試車至 5/1 凱旋之完整打卡數據彙整</p>
             </div>
-            <button onclick="downloadCSV()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-green-700">
-                📥 下載 CSV 檔案 (Excel 可開)
+            <button onclick="downloadCSV()" class="bg-[#8B1A1A] text-[#D4AF37] px-6 py-3 rounded-xl font-bold shadow-lg hover:bg-black transition-all">
+                📥 下載完整數據 CSV
             </button>
         </header>
 
-        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-xl overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr>
-                        <th class="p-4 border">ID</th>
-                        <th class="p-4 border">駕駛員姓名</th>
-                        <th class="p-4 border">完賽天數</th>
-                        <th class="p-4 border">完成賽段數</th>
-                        <th class="p-4 border">總里程 (KM)</th>
-                        <th class="p-4 border">預計總工時</th>
-                        <th class="p-4 border">最後打卡時間</th>
+                        <th class="p-3">駕駛 ID</th>
+                        <th class="p-3">姓名</th>
+                        <th class="p-3 bg-summary text-orange-800">總里程 (KM)</th>
+                        <th class="p-3 bg-summary text-orange-800">總賽段</th>
+                        <th class="p-3">4/26 (KM)</th>
+                        <th class="p-3">4/27 (KM)</th>
+                        <th class="p-3">4/28 (KM)</th>
+                        <th class="p-3">4/29 (KM)</th>
+                        <th class="p-3">4/30 (KM)</th>
+                        <th class="p-3">5/1 (KM)</th>
+                        <th class="p-3">完賽總工時</th>
                     </tr>
                 </thead>
                 <tbody id="dataTable">
-                    <tr><td colspan="7" class="p-10 text-center animate-pulse">正在整合雲端數據...</td></tr>
+                    <tr><td colspan="11" class="p-10 text-center animate-pulse">正在精確校對六日數據中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -44,9 +50,9 @@
 
     <script>
         const API_BASE = 'https://sheetdb.io/api/v1/poo9epu17583p';
-        let finalData = [];
+        let finalReport = [];
 
-        async function exportData() {
+        async function fetchAndProcess() {
             try {
                 const [checkinRes, userRes, itineraryRes] = await Promise.all([
                     fetch(`${API_BASE}?sheet=CheckIns`),
@@ -58,11 +64,17 @@
                 const users = await userRes.json();
                 const itinerary = await itineraryRes.json();
 
-                // 1. 建立用戶映射
                 const userMap = {};
                 users.forEach(u => userMap[u.ID || u.id] = u.NAME || u.Name);
 
-                // 2. 按隊員分組
+                // 行程里程字典：用於快速查找某賽段的里程
+                const distLookup = {};
+                itinerary.forEach(item => {
+                    const key = `${item.Day}_${(item.Section || "").toLowerCase()}`;
+                    distLookup[key] = parseFloat(item.D || 0);
+                });
+
+                // 按隊員分組
                 const fleet = {};
                 checkins.forEach(reg => {
                     const id = reg.CustomerID;
@@ -70,18 +82,33 @@
                     fleet[id].push(reg);
                 });
 
-                // 3. 整合數據
-                finalData = Object.keys(fleet).map(id => {
-                    const userRecords = fleet[id];
-                    const doneSections = [...new Set(userRecords.filter(r => r.Type === 'END').map(r => r.Section))];
-                    
-                    let totalDist = 0;
-                    let totalMin = 0;
+                const daysList = ["4/26", "4/27", "4/28", "4/29", "4/30", "5/1"];
 
+                finalReport = Object.keys(fleet).map(id => {
+                    const records = fleet[id];
+                    const driverName = userMap[id] || "未知";
+                    
+                    // 取得該隊員所有已完成(END)的賽段
+                    const doneRecords = records.filter(r => r.Type === 'END');
+                    
+                    let dayStats = { "4/26": 0, "4/27": 0, "4/28": 0, "4/29": 0, "4/30": 0, "5/1": 0 };
+                    let totalDist = 0;
+                    let totalStages = doneRecords.length;
+
+                    doneRecords.forEach(r => {
+                        const lookupKey = `${r.Day}_${(r.Section || "").toLowerCase()}`;
+                        const d = distLookup[lookupKey] || 0;
+                        if (dayStats[r.Day] !== undefined) {
+                            dayStats[r.Day] += d;
+                        }
+                        totalDist += d;
+                    });
+
+                    // 時間估算 (以全部賽段為基準)
+                    let totalMin = 0;
+                    const doneSections = [...new Set(doneRecords.map(r => `${r.Day}_${r.Section.toLowerCase()}`))];
                     itinerary.forEach(item => {
-                        const sect = (item.Section || item.section || "").toLowerCase();
-                        if (doneSections.map(s => s.toLowerCase()).includes(sect)) {
-                            totalDist += parseFloat(item.D || item.d || 0);
+                        if(doneSections.includes(`${item.Day}_${item.Section.toLowerCase()}`)) {
                             const timeStr = item.Est_Time || "";
                             const hr = parseInt(timeStr.match(/(\d+)\s*hr/) ? timeStr.match(/(\d+)\s*hr/)[1] : 0);
                             const min = parseInt(timeStr.match(/(\d+)\s*min/) ? timeStr.match(/(\d+)\s*min/)[1] : 0);
@@ -89,54 +116,54 @@
                         }
                     });
 
-                    const dates = userRecords.map(r => new Date(r.Day)).sort((a,b) => a-b);
-                    const days = Math.ceil(Math.abs(dates[dates.length-1] - dates[0]) / (1000*60*60*24)) + 1;
-
                     return {
                         id,
-                        name: userMap[id] || "未知",
-                        days,
-                        sections: doneSections.length,
-                        dist: totalDist.toFixed(1),
-                        time: `${Math.floor(totalMin/60)}h ${totalMin%60}m`,
-                        lastCheck: userRecords[userRecords.length-1].CheckIn_Time
+                        name: driverName,
+                        totalDist: totalDist.toFixed(1),
+                        totalStages,
+                        ...dayStats,
+                        totalTime: `${Math.floor(totalMin/60)}h ${totalMin%60}m`
                     };
                 });
 
                 renderTable();
             } catch (e) {
-                document.getElementById('dataTable').innerHTML = "數據讀取失敗";
+                document.getElementById('dataTable').innerHTML = "數據讀取失敗，請確認 API 權限";
             }
         }
 
         function renderTable() {
-            const html = finalData.map(d => `
-                <tr class="hover:bg-gray-50">
-                    <td class="p-4 border font-mono">${d.id}</td>
-                    <td class="p-4 border font-bold">${d.name}</td>
-                    <td class="p-4 border">${d.days} 天</td>
-                    <td class="p-4 border">${d.sections} 段</td>
-                    <td class="p-4 border text-blue-600 font-bold">${d.dist}</td>
-                    <td class="p-4 border">${d.time}</td>
-                    <td class="p-4 border text-xs text-gray-400">${d.lastCheck}</td>
+            const html = finalReport.map(d => `
+                <tr class="hover:bg-gray-50 transition-colors">
+                    <td class="p-3 border font-mono font-bold text-gray-600">${d.id}</td>
+                    <td class="p-3 border font-black text-gray-800 text-sm">${d.name}</td>
+                    <td class="p-3 border bg-orange-50 font-black text-orange-700">${d.totalDist}</td>
+                    <td class="p-3 border bg-orange-50 font-bold text-orange-600">${d.totalStages}</td>
+                    <td class="p-3 border text-gray-500">${d['4/26']}</td>
+                    <td class="p-3 border text-gray-500">${d['4/27']}</td>
+                    <td class="p-3 border text-gray-500">${d['4/28']}</td>
+                    <td class="p-3 border text-gray-500">${d['4/29']}</td>
+                    <td class="p-3 border text-gray-500">${d['4/30']}</td>
+                    <td class="p-3 border text-gray-500">${d['5/1']}</td>
+                    <td class="p-3 border font-bold text-blue-700">${d.totalTime}</td>
                 </tr>
             `).join('');
             document.getElementById('dataTable').innerHTML = html;
         }
 
         function downloadCSV() {
-            let csv = "\uFEFFID,姓名,完賽天數,完成賽段,總里程(KM),總時間,最後打卡時間\n";
-            finalData.forEach(d => {
-                csv += `${d.id},${d.name},${d.days},${d.sections},${d.dist},${d.time},${d.lastCheck}\n`;
+            let csv = "\uFEFFID,姓名,總里程,總賽段,4/26里程,4/27里程,4/28里程,4/29里程,4/30里程,5/1里程,總時間\n";
+            finalReport.forEach(d => {
+                csv += `${d.id},${d.name},${d.totalDist},${d.totalStages},${d['4/26']},${d['4/27']},${d['4/28']},${d['4/29']},${d['4/30']},${d['5/1']},${d.totalTime}\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `SunnyHouse_Cert_Data_${new Date().toLocaleDateString()}.csv`);
+            link.setAttribute("download", `陽光小屋_完整六日數據_${new Date().toLocaleDateString()}.csv`);
             link.click();
         }
 
-        exportData();
+        fetchAndProcess();
     </script>
 </body>
 </html>
