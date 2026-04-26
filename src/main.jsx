@@ -3,149 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>陽光小屋車隊 - 每日行程</title>
+    <title>陽光小屋 - 每日行程</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        'tibet-red': '#8B1A1A',
-                        'tibet-gold': '#D4AF37',
-                        'tibet-white': '#F8F4E3'
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body { background-color: #F8F4E3; background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); }
-        .card-border { border-top: 5px solid #D4AF37; border-bottom: 5px solid #8B1A1A; }
+        .tibet-card { border-top: 6px solid #D4AF37; border-bottom: 6px solid #8B1A1A; }
     </style>
 </head>
 <body class="pb-24">
 
-    <nav class="bg-tibet-red text-white p-4 sticky top-0 z-50 shadow-lg flex justify-between items-center">
+    <nav class="bg-[#8B1A1A] text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-2xl">
         <div>
             <h1 class="text-xl font-bold tracking-widest">陽光小屋車隊</h1>
-            <p id="userDisplay" class="text-[10px] text-tibet-gold uppercase tracking-tighter">Loading User...</p>
+            <p id="userDisplay" class="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest"></p>
         </div>
-        <button onclick="handleLogout()" class="text-xs border border-tibet-gold px-2 py-1 rounded">登出</button>
+        <button onclick="localStorage.clear(); window.location.href='../index.html'" class="text-xs border border-[#D4AF37] px-3 py-1 rounded-full">登出</button>
     </nav>
 
-    <div id="itineraryContainer" class="p-4 space-y-6">
-        <div class="text-center py-20">
-            <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-tibet-red"></div>
-            <p class="mt-4 text-tibet-red font-bold">扎西德勒，正在開啟路書...</p>
-        </div>
+    <div id="itineraryContainer" class="p-4 space-y-8">
+        <div class="text-center py-20 text-[#8B1A1A] font-bold">扎西德勒，載入路書中...</div>
     </div>
 
-    <div class="fixed bottom-0 w-full bg-white border-t border-tibet-gold flex justify-around py-3 shadow-[0_-2px_10px_rgba(0,0,0,0.1)]">
-        <div class="text-tibet-red flex flex-col items-center">
-            <span class="text-xl">🗺️</span>
-            <span class="text-[10px] font-bold">每日導航</span>
+    <div class="fixed bottom-0 w-full bg-white border-t border-[#D4AF37] flex justify-around py-4 shadow-inner">
+        <div class="flex flex-col items-center text-[#8B1A1A]">
+            <span class="text-2xl">🗺️</span>
+            <span class="text-[10px] font-bold">每日路書</span>
         </div>
-        <div onclick="alert('完賽證書將於第六天打卡後生成')" class="text-gray-400 flex flex-col items-center">
-            <span class="text-xl">📜</span>
-            <span class="text-[10px]">榮譽證書</span>
+        <div onclick="alert('完賽證書將於第六天打卡後開放')" class="flex flex-col items-center text-gray-300">
+            <span class="text-2xl">📜</span>
+            <span class="text-[10px] font-bold">榮譽證書</span>
         </div>
     </div>
 
     <script type="module">
         import { doCheckIn } from './api.js';
 
-        // 1. 檢查登入狀態
         const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) {
-            window.location.href = '../index.html';
-        } else {
-            document.getElementById('userDisplay').innerText = `駕駛員：${user.Name}`;
-        }
+        if (!user) window.location.href = '../index.html';
+        document.getElementById('userDisplay').innerText = `隊員：${user.Name}`;
 
-        // 2. 設定 SheetDB 配置 (請替換你的 API ID)
-        const API_ID = '你的API_ID'; 
-
-        // 3. 獲取行程資料
         async function loadItinerary() {
             try {
-                const response = await fetch(`https://sheetdb.io/api/v1/${API_ID}?sheet=Itinerary`);
+                // 讀取 Itinerary 分頁
+                const response = await fetch('https://sheetdb.io/api/v1/poo9epu17583p?sheet=Itinerary');
                 const data = await response.json();
                 renderCards(data);
-            } catch (error) {
-                document.getElementById('itineraryContainer').innerHTML = `<p class="text-center text-red-600">讀取失敗，請檢查網路</p>`;
+            } catch (e) {
+                document.getElementById('itineraryContainer').innerHTML = "資料讀取失敗，請檢查網路。";
             }
         }
 
-        // 4. 渲染行程卡片
         function renderCards(items) {
             const container = document.getElementById('itineraryContainer');
             container.innerHTML = items.map(ss => `
-                <div class="card-border bg-white rounded-xl shadow-xl overflow-hidden">
-                    <div class="p-5">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-tibet-red font-black text-2xl">${ss.Section}</span>
-                            <span class="bg-gray-100 text-gray-600 text-[10px] px-2 py-1 rounded-full font-bold">${ss.Day}</span>
-                        </div>
-                        
-                        <h2 class="text-xl font-bold text-gray-800 mb-2">${ss.Title}</h2>
-                        
-                        <div class="bg-red-50 p-3 rounded-lg border-l-4 border-tibet-red mb-4">
-                            <p class="text-xs text-tibet-red leading-relaxed">
-                                <strong>路段資訊：</strong>${ss.Description}<br>
-                                <strong>預計里程：</strong>${ss.Distance} | <strong>預計耗時：</strong>${ss.Est_Time}
-                            </p>
-                        </div>
+                <div class="tibet-card bg-white rounded-2xl shadow-xl p-6 transition-all">
+                    <div class="flex justify-between items-center mb-4">
+                        <span class="bg-[#8B1A1A] text-white text-xs px-3 py-1 rounded-full font-bold">${ss.Section}</span>
+                        <span class="text-gray-400 text-xs font-mono">${ss.Day}</span>
+                    </div>
+                    
+                    <h2 class="text-2xl font-black text-gray-800 mb-2">${ss.Title}</h2>
+                    <p class="text-sm text-gray-600 bg-orange-50 p-3 rounded-lg border-l-4 border-[#D4AF37] mb-6">
+                        ${ss.Description}
+                    </p>
 
-                        <button onclick="launchNavigation('${ss.Amap_Link}')" 
-                                class="w-full bg-[#3385ff] text-white py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-transform">
-                            <img src="https://img.icons8.com/color/48/amap.png" class="w-6 h-6">
-                            開啟高德專屬路線
+                    <button onclick="window.location.href='${ss.Amap_Link}&callnative=1'" 
+                            class="w-full bg-[#3385ff] text-white py-4 rounded-2xl font-bold shadow-lg flex items-center justify-center gap-2 mb-6 active:scale-95 transition-all">
+                        <img src="https://img.icons8.com/color/48/amap.png" class="h-6 w-6">
+                        啟動高德導航
+                    </button>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <button onclick="handleCheckIn('${ss.Section}', 'START', '${ss.Title}')" 
+                                class="bg-[#8B1A1A] text-white py-3 rounded-xl font-bold text-sm shadow">
+                            起點打卡
                         </button>
-
-                        <div class="grid grid-cols-2 gap-3 mt-4">
-                            <button onclick="handleCheckIn('${ss.Section}', 'START', '${ss.Title}')" 
-                                    class="bg-tibet-red text-white py-3 rounded-lg font-bold text-sm">
-                                起點打卡
-                            </button>
-                            <button onclick="handleCheckIn('${ss.Section}', 'END', '${ss.Title}')" 
-                                    class="border-2 border-tibet-red text-tibet-red py-3 rounded-lg font-bold text-sm">
-                                終點打卡
-                            </button>
-                        </div>
+                        <button onclick="handleCheckIn('${ss.Section}', 'END', '${ss.Title}')" 
+                                class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-3 rounded-xl font-bold text-sm">
+                            終點打卡
+                        </button>
                     </div>
                 </div>
             `).join('');
         }
 
-        // 5. 導航跳轉
-        window.launchNavigation = function(url) {
-            // 補上 callnative 確保喚起 APP
-            const finalUrl = url.includes('?') ? `${url}&callnative=1` : `${url}?callnative=1`;
-            window.location.href = finalUrl;
-        };
-
-        // 6. 打卡動作 (呼叫 api.js)
         window.handleCheckIn = async function(section, type, title) {
             const btn = event.target;
-            const originalText = btn.innerText;
             btn.innerText = "寫入中...";
             btn.disabled = true;
 
-            const success = await doCheckIn(section, type, title, API_ID);
-            
+            const success = await doCheckIn(section, type, title);
             if (success) {
                 btn.innerText = `${type === 'START' ? '已起點打卡' : '已終點打卡'}`;
-                btn.classList.add('opacity-50');
+                btn.classList.add('opacity-40');
+                alert("打卡成功！扎西德勒！");
             } else {
-                btn.innerText = originalText;
+                btn.innerText = "重試打卡";
                 btn.disabled = false;
             }
-        };
-
-        window.handleLogout = function() {
-            localStorage.clear();
-            window.location.href = '../index.html';
-        };
+        }
 
         loadItinerary();
     </script>
