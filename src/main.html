@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>陽光小屋 - 每日路書</title>
+    <title>陽光小屋 - 專業路書</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { 
@@ -15,6 +15,11 @@
         .line-draw { 
             position: absolute; left: 27px; top: 60px; bottom: 60px; 
             border-left: 2px dashed #D1D5DB; z-index: 0; 
+        }
+        /* 日期大標籤樣式 */
+        .date-header {
+            background: linear-gradient(90deg, #8B1A1A 0%, rgba(139, 26, 26, 0) 100%);
+            border-left: 8px solid #D4AF37;
         }
     </style>
 </head>
@@ -31,8 +36,8 @@
         </button>
     </nav>
 
-    <div id="itineraryContainer" class="p-4 space-y-10">
-        <div class="text-center py-20 text-[#8B1A1A] font-bold italic animate-pulse">扎西德勒，正在加載今日賽段...</div>
+    <div id="itineraryContainer" class="p-4 space-y-6">
+        <div class="text-center py-20 text-[#8B1A1A] font-bold italic animate-pulse">扎西德勒，正在加載六日賽程...</div>
     </div>
 
     <div class="fixed bottom-0 w-full bg-white border-t border-[#D4AF37] flex justify-around py-4 shadow-2xl z-50">
@@ -40,7 +45,7 @@
             <span class="text-2xl">🗺️</span>
             <span class="text-[10px] font-bold">每日路書</span>
         </div>
-        <div onclick="alert('完賽證書將於行程結束後生成')" class="flex flex-col items-center text-gray-300">
+        <div onclick="alert('完賽證書將於第六天打卡完成後開放')" class="flex flex-col items-center text-gray-300">
             <span class="text-2xl">📜</span>
             <span class="text-[10px] font-bold">榮譽證書</span>
         </div>
@@ -53,87 +58,105 @@
         if (!user) {
             window.location.href = '../index.html';
         } else {
-            // 抓取您 Users 表中的 NAME 欄位
-            document.getElementById('userDisplay').innerText = `隊員：${user.NAME || user.Name || 'ACE'}`;
+            document.getElementById('userDisplay').innerText = `駕駛員：${user.NAME || user.Name || 'ACE'}`;
         }
 
         async function loadItinerary() {
             try {
-                // 讀取您的 SheetDB API
                 const response = await fetch('https://sheetdb.io/api/v1/poo9epu17583p?sheet=Itinerary');
                 const data = await response.json();
-                renderCards(data);
+                renderCardsByGroup(data);
             } catch (e) {
-                document.getElementById('itineraryContainer').innerHTML = "<p class='text-center text-red-600 font-bold'>讀取失敗，請檢查 API 連結</p>";
+                document.getElementById('itineraryContainer').innerHTML = "<p class='text-center text-red-600 font-bold'>讀取失敗</p>";
             }
         }
 
-        function renderCards(items) {
+        function renderCardsByGroup(items) {
             const container = document.getElementById('itineraryContainer');
-            container.innerHTML = items.map(ss => {
-                // --- 欄位自動對齊機制 (解決 undefined) ---
-                const title = ss.Title || ss.title || "SS1 試車慣熟"; //
-                const startPoint = ss.Start_Point || ss.start_point || "拉薩聖地天堂洲際大飯店";
-                const endPoint = ss.End_Point || ss.end_point || "納金山-掛經幡接送中心";
-                const distance = ss.Distance || ss.distance || "11 KM";
-                const estTime = ss.Est_Time || ss.est_time || "20 min";
-                const description = ss.Description || ss.description || "(來回時間里程乘2)";
-                const amapLink = ss.Amap_Link || ss.amap_link || "https://surl.amap.com/1QvBqRX7rgNW";
+            container.innerHTML = "";
 
-                return `
-                <div class="tibet-card bg-white rounded-2xl shadow-xl p-6 relative">
-                    <div class="line-draw"></div>
-                    
-                    <div class="flex justify-between items-center mb-6 relative z-10">
-                        <span class="bg-[#8B1A1A] text-white text-[10px] px-3 py-1 rounded-full font-bold">賽段模式</span>
-                        <span class="text-gray-400 text-xs font-mono font-bold">${ss.Day || '4/27'}</span>
-                    </div>
+            // 1. 按日期進行分組 (Group by Day)
+            const groups = items.reduce((acc, item) => {
+                const day = item.Day || "未載入日期";
+                if (!acc[day]) acc[day] = [];
+                acc[day].push(item);
+                return acc;
+            }, {});
 
-                    <div class="flex items-start gap-4 mb-8 relative z-10">
-                        <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A0</div>
-                        <div class="flex-1">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Start Point</p>
-                            <h3 class="text-md font-bold text-gray-800 leading-tight">${startPoint}</h3>
-                        </div>
-                    </div>
+            // 2. 遍歷日期組進行渲染
+            Object.keys(groups).forEach(day => {
+                // 插入日期大標題
+                const dateHeader = document.createElement('div');
+                dateHeader.className = "date-header text-white p-3 mt-8 mb-4 shadow-md flex items-baseline gap-2";
+                dateHeader.innerHTML = `
+                    <span class="text-3xl font-black italic tracking-tighter">${day}</span>
+                    <span class="text-xs font-bold text-[#D4AF37] opacity-80 uppercase">Race Day</span>
+                `;
+                container.appendChild(dateHeader);
 
-                    <div class="flex items-start gap-4 mb-8 relative z-10">
-                        <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${ss.Section || 'SS1'}</div>
-                        <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">
-                            <h4 class="font-black text-[#8B1A1A] text-sm">${title}</h4>
-                            <div class="flex gap-4 mt-2 text-[10px] text-gray-500 font-bold uppercase">
-                                <span>里程: ${distance}</span>
-                                <span>預計: ${estTime}</span>
+                // 渲染該日期下的所有賽段 (SS)
+                groups[day].forEach(ss => {
+                    const title = ss.Title || ss.title || "未知賽段";
+                    const startPoint = ss.Start_Point || ss.start_point || "起點";
+                    const endPoint = ss.End_Point || ss.end_point || "終點";
+                    const distance = ss.Distance || ss.distance || "--";
+                    const estTime = ss.Est_Time || ss.est_time || "--";
+                    const description = ss.Description || ss.description || "";
+                    const amapLink = ss.Amap_Link || ss.amap_link || "#";
+
+                    const card = document.createElement('div');
+                    card.className = "tibet-card bg-white rounded-2xl shadow-xl p-6 relative mb-6";
+                    card.innerHTML = `
+                        <div class="line-draw"></div>
+                        
+                        <div class="flex items-start gap-4 mb-8 relative z-10">
+                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs">A0</div>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Start Point</p>
+                                <h3 class="text-lg font-bold text-gray-800 leading-tight">${startPoint}</h3>
                             </div>
-                            <p class="text-[10px] text-gray-400 mt-2 italic">${description}</p>
-                            
-                            <button onclick="window.location.href='${amapLink}&callnative=1'" 
-                                    class="w-full mt-4 bg-[#3385ff] text-white py-3 rounded-xl font-bold text-[10px] flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
-                                啟動 SS 專屬路線導航
+                        </div>
+
+                        <div class="flex items-start gap-4 mb-8 relative z-10">
+                            <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${ss.Section || 'SS'}</div>
+                            <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">
+                                <h4 class="font-black text-[#8B1A1A] text-md">${title}</h4>
+                                <div class="flex gap-4 mt-2 text-[11px] text-gray-500 font-bold uppercase">
+                                    <span>里程: ${distance}</span>
+                                    <span>預計: ${estTime}</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 mt-2 italic">${description}</p>
+                                
+                                <button onclick="window.location.href='${amapLink}&callnative=1'" 
+                                        class="w-full mt-4 bg-[#3385ff] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
+                                    <img src="https://img.icons8.com/color/48/amap.png" class="h-4 w-4">
+                                    啟動 SS 專屬路線導航
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start gap-4 relative z-10">
+                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs">A1</div>
+                            <div class="flex-1">
+                                <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">End Point</p>
+                                <h3 class="text-lg font-bold text-gray-800 leading-tight">${endPoint}</h3>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mt-10 pt-6 border-t border-gray-100 relative z-10">
+                            <button onclick="handleCheckIn('${ss.Section}', 'START', '${startPoint}')" 
+                                    class="bg-[#8B1A1A] text-white py-4 rounded-xl font-bold text-xs shadow-xl active:bg-black transition-colors">
+                                A0 打卡
+                            </button>
+                            <button onclick="handleCheckIn('${ss.Section}', 'END', '${endPoint}')" 
+                                    class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-4 rounded-xl font-bold text-xs active:bg-gray-100 transition-colors">
+                                A1 打卡
                             </button>
                         </div>
-                    </div>
-
-                    <div class="flex items-start gap-4 mb-8 relative z-10">
-                        <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A1</div>
-                        <div class="flex-1">
-                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">End Point</p>
-                            <h3 class="text-md font-bold text-gray-800 leading-tight">${endPoint}</h3>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-100 relative z-10">
-                        <button onclick="handleCheckIn('${ss.Section}', 'START', '${startPoint}')" 
-                                class="bg-[#8B1A1A] text-white py-3 rounded-xl font-bold text-[10px] shadow-xl active:bg-black transition-colors">
-                            A0 起點打卡
-                        </button>
-                        <button onclick="handleCheckIn('${ss.Section}', 'END', '${endPoint}')" 
-                                class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-3 rounded-xl font-bold text-[10px] active:bg-gray-100 transition-colors">
-                            A1 終點打卡
-                        </button>
-                    </div>
-                </div>
-            `; }).join('');
+                    `;
+                    container.appendChild(card);
+                });
+            });
         }
 
         window.handleCheckIn = async function(section, type, locName) {
@@ -147,11 +170,11 @@
                 btn.innerText = "✓ 已打卡";
                 btn.classList.add('opacity-50');
                 btn.disabled = true;
-                alert("打卡成功！祝您旅途愉快！");
+                alert(`【${section}】打卡成功！扎西德勒！`);
             } else {
-                btn.innerText = originalText;
+                btn.innerText = (type === 'START' ? 'A0 打卡' : 'A1 打卡');
                 btn.disabled = false;
-                alert("打卡失敗，請檢查網路連線");
+                alert("打卡失敗，請檢查網路");
             }
         };
 
