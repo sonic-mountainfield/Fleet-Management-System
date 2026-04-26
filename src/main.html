@@ -13,6 +13,7 @@
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
         
+        /* SS 標題優化 */
         .ss-header { 
             font-size: 2.8rem; 
             font-style: italic; 
@@ -21,28 +22,26 @@
             -webkit-background-clip: text; 
             -webkit-text-fill-color: transparent; 
             line-height: 1.3; 
-            padding-bottom: 8px;
             display: inline-block;
         }
         
         .stage-card { background: #1a1a1a; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.2rem; overflow: hidden; }
         
-        /* 強化 Start/Finish 顯示 */
-        .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; text-transform: uppercase; }
+        /* 全日路線標籤 */
+        .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
         .route-text { font-size: 1rem; color: #fff; font-weight: 700; }
 
         /* 觀看全日路線按鈕 */
-        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; transition: 0.2s; }
-        .btn-full-day:active { background: #1d4ed8; transform: scale(0.95); }
+        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
 
         .note-strip { background: rgba(212, 175, 55, 0.08); border: 1px dashed rgba(212, 175, 55, 0.5); border-radius: 0.8rem; padding: 0.8rem 1.2rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem; }
         .note-time { color: #D4AF37; font-family: 'Orbitron'; font-weight: 900; font-size: 0.85rem; min-width: 75px; }
 
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
-        .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; letter-spacing: -1px; }
+        .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
         
         .btn-locked { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
         .status-alert { padding: 8px; font-size: 11px; font-weight: 900; text-align: center; border-radius: 10px; margin-bottom: 15px; }
@@ -72,7 +71,7 @@
 
     <main class="max-w-4xl mx-auto p-4">
         <div id="nav-view">
-            <div class="mt-4 mb-8 px-2 text-white">
+            <div class="mt-4 mb-8 px-2">
                 <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
@@ -166,15 +165,14 @@
             
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
-                // 【強化版】Start / Finish 顯示
                 document.getElementById('dayEndpoints').innerHTML = `
                     <div class="flex items-center">
                         <span class="route-label label-start">Start</span>
-                        <span class="route-text">${dLine.Start_Point}</span>
+                        <span class="route-text text-white">${dLine.Start_Point}</span>
                     </div>
                     <div class="flex items-center">
                         <span class="route-label label-finish">Finish</span>
-                        <span class="route-text">${dLine.End_Point}</span>
+                        <span class="route-text text-white">${dLine.End_Point}</span>
                     </div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
@@ -193,22 +191,25 @@
                     const startBtnClass = hasStart ? "btn-done" : (status !== "current" ? "btn-locked" : "bg-[#8B1A1A]");
                     const endBtnClass = hasEnd ? "btn-done" : (status !== "current" ? "btn-locked" : "border border-[#333]");
 
-                    const html = `
+                    return `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
-                                <div class="flex justify-between items-end mb-8 text-white">
+                                <div class="flex justify-between items-start mb-8 text-white">
                                     <h3 class="ss-header tech-font">${item.Section}</h3>
-                                    <div class="text-right text-2xl font-black tech-font">${item.D} <small class="text-sm">Km</small></div>
+                                    <div class="text-right">
+                                        <div class="text-xl font-black tech-font">里程：${item.D}</div>
+                                        <div class="text-sm font-black tech-font text-[#D4AF37]">時間：${item.Est_Time || '--'}</div>
+                                    </div>
                                 </div>
                                 <div class="space-y-10 mb-8 relative">
                                     <div class="line-connector"></div>
                                     <div class="flex items-center gap-6 relative">
                                         <div class="loc-badge">A${ssCounter}</div>
-                                        <div><p class="text-gray-500 text-[9px] font-black uppercase">Start</p><p class="text-xl font-black text-white leading-tight">${item.Start_Point}</p></div>
+                                        <div><p class="text-gray-500 text-[9px] font-black uppercase">Start Point</p><p class="text-xl font-black text-white leading-tight">${item.Start_Point}</p></div>
                                     </div>
                                     <div class="flex items-center gap-6 relative">
                                         <div class="loc-badge" style="border-color:#8B1A1A">A${ssCounter+1}</div>
-                                        <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
+                                        <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
                                 ${item.Description ? `<div class="description-box"><p class="text-[9px] text-[#D4AF37] font-black uppercase mb-1">Pilot Notes</p><p class="text-sm font-bold text-gray-300">${item.Description}</p></div>` : ''}
@@ -220,7 +221,6 @@
                             </div>
                         </div>`;
                     ssCounter++;
-                    return html;
                 }
                 return '';
             }).join('');
