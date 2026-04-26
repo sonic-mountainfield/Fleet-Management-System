@@ -12,7 +12,7 @@
         .input-box { background: #262626; border: 2px solid #404040; color: white; text-align: center; font-size: 1.5rem; letter-spacing: 0.1em; transition: 0.3s; }
         .input-box:focus { border-color: #D4AF37; outline: none; background: #333; }
         .btn-glow { background: #8B1A1A; transition: 0.3s; box-shadow: 0 5px 20px rgba(139, 26, 26, 0.5); }
-        .btn-glow:active { transform: scale(0.95); background: #b91c1c; }
+        .btn-glow:active { transform: scale(0.95); }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen bg-black">
@@ -51,10 +51,7 @@
             const passInput = document.getElementById('birthday').value.trim();
             const btn = document.getElementById('loginBtn');
 
-            if (!passInput || passInput.length < 6) {
-                alert("請輸入正確的 8 位數生日");
-                return;
-            }
+            if (!passInput) return alert("請輸入生日");
 
             btn.disabled = true;
             btn.innerText = "衛星驗證中...";
@@ -63,15 +60,16 @@
                 const response = await fetch(API_URL);
                 const users = await response.json();
 
-                // 直接用 Birthday 比對
+                // 比對 Excel 中的 Birthday 欄位
                 const user = users.find(u => String(u.Birthday) === passInput);
 
                 if (user) {
                     // 儲存資訊 (這兩項是 main.html 運行的關鍵)
-                    localStorage.setItem('driverID', user.ID || user.id);
-                    localStorage.setItem('driverName', user.N || user.Name);
+                    localStorage.setItem('driverID', user.ID);
+                    localStorage.setItem('driverName', user.N); // 讀取 Excel 中的 N 欄位
                     
-                    window.location.href = 'main.html';
+                    // 指向 src 資料夾下的 main.html
+                    window.location.href = './src/main.html';
                 } else {
                     alert("查無此隊員資料，請檢查生日是否正確");
                     resetBtn();
