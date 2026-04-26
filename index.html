@@ -3,41 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SUNNY HOUSE - 駕駛員登入</title>
+    <title>陽光小屋車隊 - 系統登入</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; margin: 0; overflow: hidden; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #1a1a1a; margin: 0; overflow: hidden; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
-        .login-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 3rem; }
-        .glow-btn { box-shadow: 0 0 20px rgba(139, 26, 26, 0.4); transition: 0.3s; }
-        .glow-btn:active { transform: scale(0.95); }
+        .login-card { background: rgba(30, 30, 30, 0.95); border: 2px solid #8B1A1A; border-radius: 2rem; box-shadow: 0 0 30px rgba(139, 26, 26, 0.3); }
+        .input-box { background: #262626; border: 1px solid #404040; color: white; transition: 0.3s; }
+        .input-box:focus { border-color: #D4AF37; outline: none; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
+        .btn-action { background: #8B1A1A; color: white; transition: 0.3s; box-shadow: 0 4px 15px rgba(139, 26, 26, 0.4); }
+        .btn-action:active { transform: scale(0.95); }
     </style>
 </head>
-<body class="flex items-center justify-center h-screen bg-slate-950 relative">
+<body class="flex items-center justify-center h-screen bg-black">
 
-    <div class="w-full max-w-sm px-6 relative z-10">
-        <div class="login-card p-10 shadow-2xl text-center">
-            <div class="flex justify-center mb-6">
-                <div class="w-16 h-16 bg-[#8B1A1A] rounded-2xl flex items-center justify-center border-2 border-[#D4AF37]">
-                    <span class="text-[#D4AF37] font-black tech-font text-2xl">SH</span>
+    <div class="w-full max-w-sm px-6">
+        <div class="login-card p-8 text-center">
+            <div class="mb-6 flex justify-center">
+                <div class="w-20 h-20 bg-[#8B1A1A] rounded-full border-4 border-[#D4AF37] flex items-center justify-center">
+                    <span class="text-white font-black text-xl">陽光</span>
                 </div>
             </div>
 
-            <h1 class="text-white font-black text-2xl mb-10 tracking-tighter">SUNNY HOUSE PILOT</h1>
+            <h1 class="text-white text-2xl font-black mb-2 tracking-widest">陽光小屋車隊</h1>
+            <p class="text-[#D4AF37] text-[10px] font-bold uppercase tracking-[0.4em] mb-10">Tibet Self-Drive System</p>
 
-            <div class="space-y-6">
+            <div class="space-y-4">
                 <div class="text-left">
-                    <label class="text-slate-500 text-[10px] font-black uppercase tracking-widest ml-4 mb-2 block">Driver ID</label>
-                    <input type="text" id="driverID" placeholder="U100" 
-                        class="w-full bg-slate-900 border-2 border-slate-700 p-4 rounded-2xl text-white font-black outline-none focus:border-[#D4AF37] text-center uppercase">
+                    <label class="text-gray-400 text-xs font-bold mb-1 block ml-2">隊員 ID (帳號)</label>
+                    <input type="text" id="driverID" placeholder="例如: U100" class="input-box w-full p-4 rounded-xl text-center font-black uppercase">
                 </div>
 
-                <button onclick="handleLogin()" id="loginBtn" class="w-full py-4 bg-[#8B1A1A] text-white font-black rounded-2xl glow-btn text-lg tracking-widest">
-                    啟動終端
+                <div class="text-left">
+                    <label class="text-gray-400 text-xs font-bold mb-1 block ml-2">出生年月日 (密碼)</label>
+                    <input type="password" id="birthday" placeholder="例如: 19861126" class="input-box w-full p-4 rounded-xl text-center font-black">
+                </div>
+
+                <button onclick="handleLogin()" id="loginBtn" class="btn-action w-full py-4 rounded-xl font-black text-lg mt-6">
+                    啟動車隊系統
                 </button>
             </div>
-            <p class="mt-10 text-[10px] text-slate-600 font-bold uppercase tracking-widest">Verified by Sunny House</p>
+            
+            <p class="mt-8 text-[10px] text-gray-600 font-bold tracking-tighter">© SUNNY HOUSE FLEET MANAGEMENT</p>
         </div>
     </div>
 
@@ -46,36 +54,35 @@
 
         async function handleLogin() {
             const idInput = document.getElementById('driverID').value.trim().toUpperCase();
-            if (!idInput) return alert("請輸入 ID");
-
+            const passInput = document.getElementById('birthday').value.trim();
             const btn = document.getElementById('loginBtn');
+
+            if (!idInput || !passInput) return alert("請輸入 ID 與生日密碼");
+
             btn.disabled = true;
-            btn.innerText = "驗證中...";
+            btn.innerText = "驗證衛星數據...";
 
             try {
                 const response = await fetch(API_URL);
                 const users = await response.json();
 
-                // 尋找用戶
-                const user = users.find(u => (u.ID || u.id) === idInput);
+                // 驗證 ID 與 生日 (對應 Excel 中的 Birthday 欄位)
+                const user = users.find(u => (u.ID || u.id) === idInput && String(u.Birthday) === passInput);
 
                 if (user) {
-                    // 【關鍵修正】對應 Excel 欄位 "N"
-                    const nameToStore = user.N || user.NAME || "駕駛員";
-                    
+                    // 儲存資訊 (對應欄位 N)
                     localStorage.setItem('driverID', idInput);
-                    localStorage.setItem('driverName', nameToStore);
-
+                    localStorage.setItem('driverName', user.N || user.Name || "車隊隊員");
                     window.location.href = 'main.html';
                 } else {
-                    alert("ID 錯誤");
+                    alert("ID 或生日密碼錯誤，請重新確認");
                     btn.disabled = false;
-                    btn.innerText = "啟動終端";
+                    btn.innerText = "啟動車隊系統";
                 }
             } catch (error) {
-                alert("網路錯誤");
+                alert("網路連線失敗");
                 btn.disabled = false;
-                btn.innerText = "啟動終端";
+                btn.innerText = "啟動車隊系統";
             }
         }
     </script>
