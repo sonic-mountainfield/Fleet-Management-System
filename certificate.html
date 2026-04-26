@@ -10,7 +10,6 @@
         :root {
             --tibet-red: #8B1A1A;
             --tibet-gold: #D4AF37;
-            --tech-blue: #00f2ff;
         }
         body { background-color: #1a1a1a; font-family: sans-serif; }
         .cert-outer { 
@@ -26,7 +25,6 @@
             position: relative;
             background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
         }
-        /* 科技感背景底紋 */
         .tech-grid {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
@@ -38,11 +36,10 @@
         .tibet-font { font-family: 'Noto Serif TC', serif; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         
-        /* 地圖點位脈衝動畫 */
-        .map-dot { fill: var(--tibet-red); filter: drop-shadow(0 0 5px var(--tibet-gold)); }
+        /* 地圖動畫 */
         .map-line { stroke: var(--tibet-gold); stroke-width: 3; fill: none; stroke-dasharray: 1000; stroke-dashoffset: 1000; animation: draw 3s forwards ease-in-out; }
-        
         @keyframes draw { to { stroke-dashoffset: 0; } }
+        
         @media print { .no-print { display: none; } body { background: white; padding: 0; } .cert-outer { box-shadow: none; border-width: 10px; } }
     </style>
 </head>
@@ -50,10 +47,10 @@
 
     <div class="max-w-xl mx-auto bg-white/10 backdrop-blur-md p-6 rounded-2xl mb-10 no-print border border-white/20">
         <div class="flex flex-col gap-4">
-            <h2 class="text-white font-bold text-center italic tracking-widest">SUNNY HOUSE COMMAND CENTER</h2>
+            <h2 class="text-white font-bold text-center italic tracking-widest text-sm">SUNNY HOUSE FLEET COMMAND</h2>
             <div class="flex gap-2">
                 <input type="text" id="searchID" placeholder="輸入隊員 ID (如: U100)" class="flex-1 bg-black/20 border-2 border-[#D4AF37]/50 text-white p-3 rounded-lg outline-none focus:border-[#D4AF37]">
-                <button onclick="generateTechCert()" class="bg-[#8B1A1A] text-[#D4AF37] px-6 py-3 rounded-lg font-black hover:bg-black transition-all">生成證書</button>
+                <button onclick="generateFinalCert()" class="bg-[#8B1A1A] text-[#D4AF37] px-6 py-3 rounded-lg font-black hover:bg-black transition-all">生成證書</button>
             </div>
         </div>
     </div>
@@ -62,14 +59,12 @@
         <div class="cert-inner">
             <div class="tech-grid"></div>
             
-            <div class="flex justify-between items-start mb-12 relative z-10">
-                <div class="flex items-center gap-4">
-                    <div class="w-16 h-16 bg-[#8B1A1A] rounded-full flex items-center justify-center border-2 border-[#D4AF37] shadow-lg">
-                        <span class="text-[#D4AF37] font-black text-xs text-center">陽光<br>小屋</span>
-                    </div>
-                    <div>
+            <div class="flex justify-between items-center mb-10 relative z-10">
+                <div class="flex items-center gap-5">
+                    <img src="logo.png" alt="陽光小屋 LOGO" class="w-20 h-20 object-contain drop-shadow-md">
+                    <div class="border-l-2 border-gray-200 pl-5">
                         <h3 class="tech-font text-[10px] font-bold text-gray-400 tracking-[0.3em]">SUNNY HOUSE ADVENTURE</h3>
-                        <p class="text-xs font-bold text-[#8B1A1A]">西藏珠峰環線自駕挑戰賽</p>
+                        <p class="text-sm font-bold text-[#8B1A1A]">西藏珠峰環線自駕挑戰賽</p>
                     </div>
                 </div>
                 <div class="text-right">
@@ -78,65 +73,50 @@
                 </div>
             </div>
 
-            <div class="mb-12 relative z-10 leading-loose">
-                <p class="text-xl text-gray-800">
-                    尊敬的 <span id="certName" class="text-3xl font-black border-b-4 border-[#D4AF37] px-6 mx-2 text-black">---</span> 隊員：
+            <div class="mb-10 relative z-10 leading-loose">
+                <p class="text-2xl text-gray-800">
+                    尊敬的 <span id="certName" class="text-4xl font-black border-b-4 border-[#D4AF37] px-6 mx-2 text-black">---</span> 隊員：
                 </p>
                 <p class="text-lg text-gray-600 mt-6 indent-12">
-                    在本次「西藏珠峰環線」極限自駕壯遊中，您憑藉卓越的勇氣與精湛的車技，成功穿越世界屋脊。完成總計 <span id="certSS" class="font-bold text-[#8B1A1A]">--</span> 個精密打卡賽段，征服平均海拔 4,000 公尺以上的艱險路況。
+                    在本次「西藏珠峰環線」極限自駕壯遊中，您憑藉卓越勇氣與精湛車技，成功征服高原險阻。總計跨越 <span id="certDist" class="font-bold text-[#8B1A1A]">--</span> 公里，完成 <span id="certSS" class="font-bold text-[#8B1A1A]">--</span> 個賽段打卡。特頒此證，銘記這場世界屋脊的冒險。
                 </p>
             </div>
 
-            <div class="relative w-full h-[350px] bg-gray-50 rounded-3xl mb-12 border border-gray-200 shadow-inner overflow-hidden">
-                <div class="absolute top-4 left-6 tech-font text-[10px] text-gray-300 tracking-widest uppercase">Real-time Route Telemetry</div>
-                
+            <div class="relative w-full h-[360px] bg-gray-50 rounded-3xl mb-10 border border-gray-200 shadow-inner overflow-hidden">
+                <div class="absolute top-4 left-6 tech-font text-[9px] text-gray-300 tracking-widest uppercase">Mission Route Telemetry</div>
                 <svg viewBox="0 0 1000 400" class="w-full h-full p-8">
-                    <defs>
-                        <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="coloredBlur"/><feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-                    </defs>
-
-                    <path d="M850,50 L750,150 L650,50 L550,150 L400,80 L250,150 L100,320 L250,350 L450,280 L650,350 L850,50" stroke="#eee" stroke-width="8" fill="none" stroke-linecap="round" />
+                    <path d="M850,80 C700,50 500,50 350,100 C200,150 100,250 150,320 C250,380 500,380 700,320 C850,250 900,150 850,80" stroke="#eee" stroke-width="10" fill="none" />
+                    <path class="map-line" d="M850,80 C700,50 500,50 350,100 C200,150 100,250 150,320 C250,380 500,380 700,320 C850,250 900,150 850,80" />
                     
-                    <path class="map-line" d="M850,50 L750,150 L650,50 L550,150 L400,80 L250,150 L100,320 L250,350 L450,280 L650,350 L850,50" filter="url(#glow)" />
-
-                    <g class="map-dot">
-                        <circle cx="850" cy="50" r="8" /> <text x="865" y="55" class="text-[14px] font-bold fill-[#8B1A1A]">拉薩</text>
-                        <circle cx="750" cy="150" r="5" /> <text x="740" y="175" class="text-[10px] fill-gray-500">曲水</text>
-                        <circle cx="650" cy="50" r="5" /> <text x="640" y="40" class="text-[10px] fill-gray-500">日喀則</text>
-                        <circle cx="550" cy="150" r="5" /> <text x="540" y="175" class="text-[10px] fill-gray-500">拉孜</text>
-                        <circle cx="400" cy="80" r="5" /> <text x="390" y="70" class="text-[10px] fill-gray-500">定日</text>
-                        <circle cx="250" cy="150" r="10" fill="#8B1A1A" /> <text x="180" y="145" class="text-[12px] font-black fill-[#8B1A1A]">珠峰大本營</text>
-                        <circle cx="100" cy="320" r="5" /> <text x="80" y="345" class="text-[10px] fill-gray-500">樟木</text>
-                        <circle cx="250" cy="350" r="5" /> <text x="240" y="375" class="text-[10px] fill-gray-500">定結</text>
-                        <circle cx="450" cy="280" r="8" /> <text x="440" y="305" class="text-[12px] font-bold fill-gray-500">江孜</text>
-                        <circle cx="650" cy="350" r="8" /> <text x="640" y="375" class="text-[12px] font-bold fill-gray-500">羊卓雍措</text>
+                    <g fill="#8B1A1A">
+                        <circle cx="850" cy="80" r="8" /> <text x="865" y="85" class="text-[14px] font-black">拉薩</text>
+                        <circle cx="600" cy="65" r="5" /> <text x="580" y="55" class="text-[11px] fill-gray-500">日喀則</text>
+                        <circle cx="350" cy="100" r="5" /> <text x="320" y="90" class="text-[11px] fill-gray-500">拉孜</text>
+                        <circle cx="150" cy="320" r="10" fill="#D4AF37" /> <text x="70" y="350" class="text-[13px] font-black">珠峰大本營 🏔️</text>
+                        <circle cx="450" cy="360" r="6" /> <text x="430" y="385" class="text-[11px] fill-gray-500">江孜</text>
+                        <circle cx="700" cy="320" r="6" /> <text x="715" y="340" class="text-[11px] fill-gray-500">羊卓雍措</text>
                     </g>
                 </svg>
             </div>
 
-            <div class="flex justify-between items-end relative z-10">
+            <div class="flex justify-between items-end relative z-10 px-4">
                 <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-8 bg-gray-100 p-4 rounded-xl border-l-4 border-[#8B1A1A]">
+                    <div class="bg-gray-100 px-6 py-4 rounded-xl border-l-4 border-[#8B1A1A] flex gap-10">
                         <div>
-                            <p class="tech-font text-[9px] text-gray-400">TOTAL DISTANCE</p>
-                            <p class="text-xl font-black text-gray-800"><span id="certDist">--</span> <small class="text-xs">KM</small></p>
+                            <p class="tech-font text-[9px] text-gray-400">MISSION TIME</p>
+                            <p class="text-xl font-black text-gray-800" id="certTime">--</p>
                         </div>
                         <div>
-                            <p class="tech-font text-[9px] text-gray-400">DRIVING TIME</p>
-                            <p class="text-xl font-black text-gray-800"><span id="certTime">--</span></p>
+                            <p class="tech-font text-[9px] text-gray-400">AUTHENTICATION DATE</p>
+                            <p class="text-xl font-black text-gray-800" id="certDate">---</p>
                         </div>
                     </div>
-                    <div class="text-[10px] text-gray-400 font-mono">
-                        <p>證書編號：SHF-<span id="certNo">---</span></p>
-                        <p>認證日期：<span id="certDate">---</span></p>
-                    </div>
+                    <p class="text-[10px] text-gray-400 font-mono">CERTIFICATE ID: SHF-<span id="certNo">---</span></p>
                 </div>
                 
-                <div class="flex flex-col items-center">
-                    <div class="w-32 h-32 border-4 border-[#8B1A1A] rounded-full flex items-center justify-center mb-2 rotate-[-15deg] bg-white/50 backdrop-blur-sm shadow-xl">
-                        <div class="text-center">
-                            <p class="text-[#8B1A1A] font-black text-[10px] leading-tight italic">SUNNY HOUSE<br>TIBET OFFICIAL<br>CERTIFIED</p>
-                        </div>
+                <div class="text-center">
+                    <div class="w-32 h-32 border-4 border-[#8B1A1A] rounded-full flex items-center justify-center mb-2 rotate-[-10deg] bg-white shadow-xl">
+                        <div class="text-[#8B1A1A] font-black text-[11px] leading-tight italic">SUNNY HOUSE<br>OFFICIAL<br>VERIFIED</div>
                     </div>
                     <p class="tibet-font text-2xl text-[#8B1A1A] font-bold">總管家 敬上</p>
                 </div>
@@ -144,12 +124,12 @@
         </div>
     </div>
 
-    <div class="text-center mt-10 no-print">
-        <button onclick="window.print()" class="bg-gray-800 text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:scale-105 transition-all">列印或儲存為 PDF</button>
+    <div class="text-center mt-12 no-print">
+        <button onclick="window.print()" class="bg-[#8B1A1A] text-white px-12 py-4 rounded-full font-bold shadow-2xl hover:scale-105 transition-all">列印或儲存為 PDF</button>
     </div>
 
     <script>
-        async function generateTechCert() {
+        async function generateFinalCert() {
             const id = document.getElementById('searchID').value.toUpperCase().trim();
             if(!id) return alert("請輸入 ID");
 
@@ -193,7 +173,7 @@
 
                 document.getElementById('certContainer').classList.remove('hidden');
                 
-            } catch (e) { alert("數據同步失敗"); }
+            } catch (e) { alert("生成失敗"); }
         }
     </script>
 </body>
