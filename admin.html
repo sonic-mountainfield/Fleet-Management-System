@@ -3,50 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>車隊指揮中心 - 實名監控</title>
+    <title>陽光小屋 - 指揮中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         body { background-color: #f0f2f5; font-family: sans-serif; }
+        #routeMap { height: 450px; width: 100%; border-radius: 1.5rem; border: 4px solid #8B1A1A; z-index: 1; }
         .user-card { transition: all 0.3s ease; border-top-width: 6px; }
-        .user-card:hover { transform: translateY(-3px); shadow-lg; }
+        .user-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .leaflet-popup-content-wrapper { background: #8B1A1A; color: white; border: 1px solid #D4AF37; }
+        .leaflet-popup-tip { background: #8B1A1A; }
     </style>
 </head>
-<body class="p-6">
+<body class="p-4 md:p-8">
 
-    <header class="bg-[#8B1A1A] text-white p-6 rounded-2xl shadow-xl mb-8 flex justify-between items-center">
-        <div>
-            <h1 class="text-2xl font-bold tracking-widest text-[#D4AF37]">陽光小屋車隊後台</h1>
-            <p class="text-[10px] uppercase font-bold opacity-80">Real-time Real-name Monitor</p>
+    <header class="bg-[#8B1A1A] text-white p-6 rounded-3xl shadow-xl mb-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="text-center md:text-left">
+            <h1 class="text-3xl font-black tracking-widest text-[#D4AF37]">陽光小屋指揮中心</h1>
+            <p class="text-xs uppercase font-bold opacity-80 tracking-[0.3em]">Fleet Command & Real-time Map</p>
         </div>
-        <button onclick="fetchAllData()" class="bg-[#D4AF37] text-[#8B1A1A] px-5 py-2 rounded-lg font-bold text-sm shadow-md active:scale-95 transition-all">
-            同步最新動態 ↻
+        <button onclick="fetchAllData()" class="bg-[#D4AF37] text-[#8B1A1A] px-8 py-3 rounded-xl font-black text-sm shadow-lg active:scale-95 transition-all">
+            同步數據 ↻
         </button>
     </header>
 
-    <div id="fleetDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        <div class="col-span-full text-center py-20 text-gray-400 font-bold italic animate-pulse">正在識別隊員身份並讀取位置...</div>
+    <div class="max-w-full mx-auto mb-10">
+        <div id="routeMap" class="shadow-2xl"></div>
     </div>
 
+    <div id="fleetDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="col-span-full text-center py-20 text-gray-400 font-bold italic animate-pulse">正在掃描衛星位置並識別成員...</div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const CHECKIN_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=CheckIns';
         const USER_URL = 'https://sheetdb.io/api/v1/poo9epu17583p?sheet=Users';
 
+        // 1. 初始化地圖
+        const map = L.map('routeMap').setView([29.267, 88.881], 7);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+        }).addTo(map);
+
+        // 2. 定義環狀路線座標 (基於您的行程大約位置)
+        const stations = [
+            { id: "A0", name: "拉薩", pos: [29.646, 91.117] },
+            { id: "A1", name: "尼木", pos: [29.433, 90.166] },
+            { id: "A2", name: "日喀則", pos: [29.267, 88.881] },
+            { id: "A3", name: "定日", pos: [28.583, 87.083] },
+            { id: "A5", name: "珠峰", pos: [28.143, 86.848] },
+            { id: "A2", name: "江孜", pos: [28.917, 89.600] },
+            { id: "A3", name: "羊湖", pos: [28.933, 90.416] },
+            { id: "A0", name: "拉薩(終)", pos: [29.650, 91.120] }
+        ];
+
+        // 繪製固定路線
+        const routeLine = L.polyline(stations.map(s => s.pos), {
+            color: '#8B1A1A', weight: 4, opacity: 0.6, dashArray: '10, 10'
+        }).addTo(map);
+
+        stations.forEach(s => {
+            L.circleMarker(s.pos, {
+                radius: 5, fillColor: "#D4AF37", color: "#8B1A1A", weight: 2, fillOpacity: 1
+            }).addTo(map).bindPopup(`<b>${s.id} ${s.name}</b>`);
+        });
+
+        // 3. 數據同步邏輯
         async function fetchAllData() {
             try {
-                // 同時讀取兩個表
-                const [checkinRes, userRes] = await Promise.all([
-                    fetch(CHECKIN_URL),
-                    fetch(USER_URL)
-                ]);
-                
+                const [checkinRes, userRes] = await Promise.all([fetch(CHECKIN_URL), fetch(USER_URL)]);
                 const checkins = await checkinRes.json();
                 const users = await userRes.json();
                 
-                // 建立 ID 對應 姓名 的清單
                 const userMap = {};
-                users.forEach(u => {
-                    userMap[u.ID || u.id] = u.NAME || u.Name || "未知成員";
-                });
+                users.forEach(u => userMap[u.ID || u.id] = u.NAME || u.Name || "未知成員");
 
                 processFleetData(checkins, userMap);
             } catch (e) {
@@ -56,7 +87,6 @@
 
         function processFleetData(records, userMap) {
             const fleet = {};
-            // 分組紀錄
             records.forEach(reg => {
                 const id = reg.CustomerID;
                 if (!fleet[id]) fleet[id] = [];
@@ -66,59 +96,54 @@
             const container = document.getElementById('fleetDashboard');
             container.innerHTML = "";
 
-            const sortedIDs = Object.keys(fleet);
-
-            sortedIDs.forEach(id => {
+            Object.keys(fleet).forEach(id => {
                 const userRecords = fleet[id];
                 const lastReg = userRecords[userRecords.length - 1];
                 const isFinished = lastReg.Type === 'END';
-                const driverName = userMap[id] || "訪客"; // 這裡抓到名字了！
+                const driverName = userMap[id] || id;
 
+                // 生成看板卡片
                 const card = document.createElement('div');
-                card.className = `user-card bg-white rounded-2xl shadow-sm overflow-hidden ${isFinished ? "border-green-500" : "border-blue-500"}`;
+                card.className = `user-card bg-white rounded-3xl shadow-lg overflow-hidden ${isFinished ? "border-green-500" : "border-blue-500"}`;
                 card.innerHTML = `
-                    <div class="p-5">
+                    <div class="p-6">
                         <div class="flex justify-between items-start mb-4">
                             <div>
                                 <h3 class="text-2xl font-black text-gray-800">${driverName}</h3>
-                                <p class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">ID: ${id}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">ID: ${id}</p>
                             </div>
-                            <span class="px-2 py-1 rounded text-[10px] font-bold ${isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black ${isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">
                                 ${isFinished ? '已抵達' : '行進中'}
                             </span>
                         </div>
-                        
-                        <div class="space-y-3">
-                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-100">
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="text-[10px] text-gray-400 font-bold uppercase">當前賽段</span>
-                                    <span class="text-[10px] font-black ${lastReg.Type === 'START' ? 'text-blue-500' : 'text-green-500'}">${lastReg.Type}</span>
+                        <div class="space-y-4">
+                            <div class="bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                                <div class="flex justify-between items-center mb-1 text-[10px] font-black uppercase text-gray-400">
+                                    <span>目前賽段</span>
+                                    <span class="${lastReg.Type === 'START' ? 'text-blue-500' : 'text-green-500'}">${lastReg.Type}</span>
                                 </div>
-                                <p class="font-bold text-gray-700">${lastReg.Section}</p>
+                                <p class="font-bold text-gray-700 text-lg">${lastReg.Section}</p>
                             </div>
-                            
                             <div>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後位置</p>
-                                <p class="text-sm font-bold text-gray-800 leading-tight h-10 overflow-hidden">${lastReg.LocationName}</p>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後打卡位置</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight">${lastReg.LocationName}</p>
                             </div>
-                            
-                            <div class="pt-2 border-t flex justify-between items-center text-[10px] text-gray-400">
-                                <span>今日紀錄: ${userRecords.length} 筆</span>
-                                <span class="font-mono text-[#8B1A1A] font-bold">${lastReg.CheckIn_Time}</span>
+                            <div class="pt-4 border-t flex justify-between items-center text-xs">
+                                <span class="text-gray-400 font-mono">紀錄: ${userRecords.length} 筆</span>
+                                <span class="font-black text-[#8B1A1A] bg-red-50 px-2 py-1 rounded">${lastReg.CheckIn_Time}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="bg-gray-50 p-3 flex gap-2">
-                        <button onclick="location.href='certificate.html?id=${id}'" class="w-full py-2 bg-gray-800 text-[#D4AF37] rounded-lg text-xs font-bold hover:bg-black transition-all">生成完賽證書</button>
+                    <div class="p-4 bg-gray-50 border-t border-gray-100">
+                        <button onclick="location.href='certificate.html?id=${id}'" class="w-full py-3 bg-[#8B1A1A] text-[#D4AF37] rounded-xl font-black text-xs hover:bg-black transition-all shadow-md">生成證書</button>
                     </div>
                 `;
                 container.appendChild(card);
             });
         }
 
-        // 啟動
         fetchAllData();
-        setInterval(fetchAllData, 30000); // 30秒更新一次
+        setInterval(fetchAllData, 30000);
     </script>
 </body>
 </html>
