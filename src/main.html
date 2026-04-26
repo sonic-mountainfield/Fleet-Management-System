@@ -13,27 +13,12 @@
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
         
-        /* SS 標題優化 */
-        .ss-header { 
-            font-size: 2.8rem; 
-            font-style: italic; 
-            font-weight: 900; 
-            background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); 
-            -webkit-background-clip: text; 
-            -webkit-text-fill-color: transparent; 
-            line-height: 1.3; 
-            display: inline-block;
-        }
-        
+        .ss-header { font-size: 2.8rem; font-style: italic; font-weight: 900; background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.3; display: inline-block; margin-left: auto; }
         .stage-card { background: #1a1a1a; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.2rem; overflow: hidden; }
         
-        /* 全日路線標籤 */
         .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
-        .route-text { font-size: 1rem; color: #fff; font-weight: 700; }
-
-        /* 觀看全日路線按鈕 */
         .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
 
         .note-strip { background: rgba(212, 175, 55, 0.08); border: 1px dashed rgba(212, 175, 55, 0.5); border-radius: 0.8rem; padding: 0.8rem 1.2rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem; }
@@ -54,11 +39,14 @@
 
     <nav class="nav-header">
         <div class="p-3 flex justify-between items-center">
-            <div class="flex items-center gap-2">
-                <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center font-black text-[#8B1A1A] text-xs">陽</div>
-                <h1 class="tech-font text-[10px] tracking-tight text-white italic">FLEET TERMINAL</h1>
+            <div class="flex items-center gap-3">
+                <button onclick="handleLogout()" class="w-7 h-7 bg-white/10 rounded-full flex items-center justify-center font-black text-white text-[10px] border border-white/20 active:bg-white active:text-[#8B1A1A] transition-all">EXIT</button>
+                <div class="flex items-center gap-2">
+                    <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center font-black text-[#8B1A1A] text-xs">陽</div>
+                    <h1 class="tech-font text-[10px] tracking-tight text-white italic">FLEET TERMINAL</h1>
+                </div>
             </div>
-            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full">🏆 冒險紀錄</button>
+            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full active:bg-[#D4AF37] active:text-black">🏆 觀看紀錄</button>
         </div>
         <div id="dateScroll" class="flex overflow-x-auto px-4 py-1 gap-4 bg-[#6b1414] scrollbar-hide">
             <button onclick="changeDay('4/27')" class="date-tab active" id="tab-4/27">4/27</button>
@@ -75,23 +63,35 @@
                 <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
-
             <div id="dateNotice" class="hidden"></div>
-
             <section id="dayOverviewSection" class="mb-8 bg-zinc-900 rounded-[2rem] p-8 border border-zinc-800">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="currentDayText" class="text-xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
-                    <button id="btnDayMap" class="btn-full-day active:scale-95 transition-all">觀看全日路線</button>
+                    <button id="btnDayMap" class="btn-full-day">觀看全日路線</button>
                 </div>
                 <div id="dayEndpoints" class="space-y-4 border-l-4 border-gray-700 pl-6"></div>
             </section>
-            
             <div id="stageContainer" class="space-y-1"></div>
         </div>
 
         <div id="record-view" class="hidden">
-            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-[10px] mb-6 flex items-center gap-1">← BACK</button>
-            <div id="splitList" class="space-y-1"></div>
+            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-[10px] mb-6 flex items-center gap-1">← BACK TO TERMINAL</button>
+            
+            <section class="bg-zinc-900 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] shadow-2xl mb-8 text-white text-center">
+                <h2 id="recordNameDisplay" class="text-3xl font-black italic mb-6">---</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold">Total Distance</p>
+                        <p id="statKM" class="text-2xl font-black tech-font">0.0 <small class="text-xs">KM</small></p>
+                    </div>
+                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
+                        <p class="text-[9px] text-gray-500 uppercase font-bold">Total Time</p>
+                        <p id="statTime" class="text-2xl font-black tech-font text-[#D4AF37]">0h 0m</p>
+                    </div>
+                </div>
+            </section>
+            
+            <div id="splitList" class="space-y-2"></div>
         </div>
     </main>
 
@@ -106,6 +106,7 @@
 
         async function init() {
             document.getElementById('userNameDisplay').innerText = uName;
+            document.getElementById('recordNameDisplay').innerText = uName;
             try {
                 const [itiRes, checkRes] = await Promise.all([
                     fetch(`${API_BASE}?sheet=Itinerary`),
@@ -120,13 +121,22 @@
                 const validDays = ["4/27","4/28","4/29","4/30","5/1"];
                 const startDay = validDays.includes(today) ? today : "4/27";
                 changeDay(startDay);
-            } catch (e) { console.error("Load Fail"); }
+            } catch (e) { alert("數據加載失敗，請重啟系統"); }
+        }
+
+        // 登出功能
+        function handleLogout() {
+            if(confirm("確認是否登出車隊系統？")) {
+                localStorage.clear();
+                window.location.href = '../index.html';
+            }
         }
 
         function switchTab(view) {
             document.getElementById('nav-view').classList.toggle('hidden', view !== 'nav');
             document.getElementById('record-view').classList.toggle('hidden', view !== 'record');
             document.getElementById('dateScroll').style.display = view === 'nav' ? 'flex' : 'none';
+            if(view === 'record') loadPersonalData();
         }
 
         function changeDay(day) {
@@ -166,14 +176,8 @@
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
                 document.getElementById('dayEndpoints').innerHTML = `
-                    <div class="flex items-center">
-                        <span class="route-label label-start">Start</span>
-                        <span class="route-text text-white">${dLine.Start_Point}</span>
-                    </div>
-                    <div class="flex items-center">
-                        <span class="route-label label-finish">Finish</span>
-                        <span class="route-text text-white">${dLine.End_Point}</span>
-                    </div>
+                    <div class="flex items-center"><span class="route-label label-start">Start</span><span class="route-text text-white">${dLine.Start_Point}</span></div>
+                    <div class="flex items-center"><span class="route-label label-finish">Finish</span><span class="route-text text-white">${dLine.End_Point}</span></div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
             }
@@ -191,12 +195,12 @@
                     const startBtnClass = hasStart ? "btn-done" : (status !== "current" ? "btn-locked" : "bg-[#8B1A1A]");
                     const endBtnClass = hasEnd ? "btn-done" : (status !== "current" ? "btn-locked" : "border border-[#333]");
 
-                    return `
+                    const html = `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
-                                <div class="flex justify-between items-start mb-8 text-white">
+                                <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
                                     <h3 class="ss-header tech-font">${item.Section}</h3>
-                                    <div class="text-right">
+                                    <div class="text-left">
                                         <div class="text-xl font-black tech-font">里程：${item.D}</div>
                                         <div class="text-sm font-black tech-font text-[#D4AF37]">時間：${item.Est_Time || '--'}</div>
                                     </div>
@@ -221,13 +225,63 @@
                             </div>
                         </div>`;
                     ssCounter++;
+                    return html;
                 }
                 return '';
             }).join('');
         }
 
         async function loadPersonalData() {
-            // 此處維持原本邏輯
+            const splitArea = document.getElementById('splitList');
+            splitArea.innerHTML = '<p class="p-20 text-center animate-pulse text-gray-600 font-bold uppercase text-[10px]">正在計算衛星數據...</p>';
+            
+            try {
+                // 重新獲取最新的打卡紀錄
+                const res = await fetch(`${API_BASE}?sheet=CheckIns`);
+                const allChecks = await res.json();
+                const myEnds = allChecks.filter(r => r.CustomerID === uID && r.Type === 'END');
+                
+                let totalK = 0;
+                let totalM = 0;
+                let html = "";
+                
+                const days = ["4/27", "4/28", "4/29", "4/30", "5/1"];
+                
+                days.forEach(d => {
+                    const dayDone = myEnds.filter(r => r.Day === d);
+                    let dayK = 0;
+                    
+                    dayDone.forEach(r => {
+                        // 找到對應行程的公里數
+                        const info = itineraryData.find(i => i.Day === d && i.Section.toLowerCase() === r.Section.toLowerCase());
+                        if(info) {
+                            const dk = parseFloat(info.D) || 0;
+                            dayK += dk;
+                            totalK += dk;
+                            // 預估時間計算 (例如 "1.5 Hr" 轉為 90 分鐘)
+                            const hrMatch = info.Est_Time.match(/([\d.]+)\s*Hr/i);
+                            if(hrMatch) totalM += parseFloat(hrMatch[1]) * 60;
+                        }
+                    });
+                    
+                    html += `
+                        <div class="flex justify-between items-center p-6 bg-zinc-900 rounded-[1.5rem] border border-zinc-800 mb-1">
+                            <div>
+                                <p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
+                                <p class="font-black ${dayDone.length > 0 ? 'text-[#D4AF37]' : 'text-zinc-800'} text-xs">
+                                    ${dayDone.length > 0 ? `✔️ 完成 ${dayDone.length} 賽段` : '---'}
+                                </p>
+                            </div>
+                            <div class="text-right text-lg font-black tech-font text-white">${dayK.toFixed(1)} <small class="text-[10px]">KM</small></div>
+                        </div>`;
+                });
+
+                document.getElementById('statKM').innerText = totalK.toFixed(1);
+                document.getElementById('statTime').innerText = `${Math.floor(totalM/60)}h ${Math.round(totalM%60)}m`;
+                splitArea.innerHTML = html;
+            } catch (e) {
+                splitArea.innerHTML = "<p class='text-center text-red-500'>數據提取失敗</p>";
+            }
         }
 
         init();
