@@ -3,39 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陽光小屋 - 後台管理系統</title>
+    <title>車隊指揮中心 - 看板模式</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #f3f4f6; font-family: sans-serif; }
-        .admin-card { border-left: 6px solid #8B1A1A; }
+        body { background-color: #f0f2f5; font-family: sans-serif; }
+        .user-card { transition: all 0.3s ease; }
+        .user-card:hover { transform: translateY(-2px); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-6">
 
-    <header class="bg-[#8B1A1A] text-white p-6 rounded-2xl shadow-xl mb-8">
-        <h1 class="text-2xl font-bold tracking-widest">車隊後台指揮中心</h1>
-        <p class="text-xs text-[#D4AF37] mt-1 uppercase font-bold">Admin Command Center</p>
+    <header class="bg-[#8B1A1A] text-white p-6 rounded-2xl shadow-xl mb-8 flex justify-between items-center">
+        <div>
+            <h1 class="text-2xl font-bold tracking-widest text-[#D4AF37]">陽光小屋車隊後台</h1>
+            <p class="text-[10px] uppercase font-bold opacity-80">Real-time Fleet Monitor</p>
+        </div>
+        <div class="text-right">
+            <button onclick="fetchRecords()" class="bg-[#D4AF37] text-[#8B1A1A] px-4 py-2 rounded-lg font-bold text-sm shadow-md active:scale-95 transition-all">
+                同步數據 ↻
+            </button>
+        </div>
     </header>
 
-    <div class="grid grid-cols-2 gap-4 mb-8">
-        <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-blue-500">
-            <p class="text-gray-400 text-[10px] font-bold uppercase">總打卡數</p>
-            <h2 id="totalCheckIns" class="text-2xl font-black text-blue-600">--</h2>
-        </div>
-        <div class="bg-white p-4 rounded-xl shadow-sm border-b-4 border-green-500">
-            <p class="text-gray-400 text-[10px] font-bold uppercase">今日完賽率</p>
-            <h2 id="completionRate" class="text-2xl font-black text-green-600">--</h2>
-        </div>
-    </div>
-
-    <div class="space-y-4">
-        <div class="flex justify-between items-end mb-2">
-            <h3 class="font-bold text-gray-700">即時打卡動態</h3>
-            <button onclick="fetchRecords()" class="text-xs text-blue-600 font-bold">手動刷新 ↻</button>
-        </div>
-        <div id="recordList" class="space-y-3">
-            <p class="text-center py-10 text-gray-400">正在同步衛星數據...</p>
-        </div>
+    <div id="fleetDashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        <div class="col-span-full text-center py-20 text-gray-400 font-bold italic animate-pulse">正在掃描所有隊員即時位置...</div>
     </div>
 
     <script>
@@ -44,39 +36,75 @@
         async function fetchRecords() {
             try {
                 const response = await fetch(API_URL);
-                let data = await response.json();
-                
-                // 讓最新的紀錄排在最上面
-                data.reverse();
-
-                document.getElementById('totalCheckIns').innerText = data.length;
-                renderRecords(data);
+                const data = await response.json();
+                processFleetData(data);
             } catch (e) {
-                alert("讀取紀錄失敗");
+                console.error("讀取紀錄失敗");
             }
         }
 
-        function renderRecords(records) {
-            const container = document.getElementById('recordList');
-            container.innerHTML = records.map(reg => `
-                <div class="admin-card bg-white p-4 rounded-lg shadow-sm">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded font-bold text-gray-500">${reg.CustomerID}</span>
-                            <h4 class="font-bold text-gray-800 text-lg">${reg.LocationName}</h4>
+        function processFleetData(records) {
+            // 按隊員 ID 分組，並只保留該隊員最新的紀錄
+            const fleet = {};
+            records.forEach(reg => {
+                const id = reg.CustomerID;
+                if (!fleet[id]) fleet[id] = [];
+                fleet[id].push(reg);
+            });
+
+            const container = document.getElementById('fleetDashboard');
+            container.innerHTML = "";
+
+            Object.keys(fleet).forEach(id => {
+                const userRecords = fleet[id];
+                // 取得最後一筆打卡
+                const lastReg = userRecords[userRecords.length - 1];
+                const isFinished = lastReg.Type === 'END';
+
+                const card = document.createElement('div');
+                card.className = "user-card bg-white rounded-2xl shadow-sm overflow-hidden border-t-4 " + (isFinished ? "border-green-500" : "border-blue-500");
+                card.innerHTML = `
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="text-xl font-black text-gray-800">${id}</h3>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Fleet Member</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-[10px] font-bold ${isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">
+                                ${isFinished ? '● 已到達終點' : '● 行進中'}
+                            </span>
                         </div>
-                        <span class="${reg.Type === 'START' ? 'text-blue-500' : 'text-red-500'} font-black text-xs italic">${reg.Type}</span>
+                        
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 p-3 rounded-lg">
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">當前賽段</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-gray-700">${lastReg.Section}</span>
+                                    <span class="text-xs font-black ${lastReg.Type === 'START' ? 'text-blue-500' : 'text-green-500'} italic">${lastReg.Type}</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mb-1">最後打卡地點</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight">${lastReg.LocationName}</p>
+                            </div>
+                            
+                            <div class="pt-2 border-t flex justify-between items-center text-[10px] text-gray-400 font-mono">
+                                <span>今日已打卡: ${userRecords.length} 次</span>
+                                <span>${lastReg.CheckIn_Time}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="mt-3 flex justify-between items-center text-[11px] text-gray-400 border-t pt-2">
-                        <span>賽段: ${reg.Section}</span>
-                        <span class="font-mono">${reg.Day} ${reg.CheckIn_Time}</span>
+                    <div class="bg-gray-50 p-3 flex gap-2">
+                        <button onclick="alert('查無詳細 GPS 數據')" class="flex-1 py-2 bg-white border rounded-lg text-[10px] font-bold text-gray-600 hover:bg-gray-100 transition-all">查看軌跡</button>
+                        <button onclick="location.href='certificate.html?id=${id}'" class="flex-1 py-2 bg-gray-800 text-white rounded-lg text-[10px] font-bold hover:bg-black transition-all">生成證書</button>
                     </div>
-                </div>
-            `).join('');
+                `;
+                container.appendChild(card);
+            });
         }
 
-        // 每 30 秒自動刷新一次
-        setInterval(fetchRecords, 30000);
+        setInterval(fetchRecords, 20000); // 每 20 秒自動刷新一次
         fetchRecords();
     </script>
 </body>
