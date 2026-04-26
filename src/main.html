@@ -9,10 +9,21 @@
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
-        .nav-header { position: sticky; top: 0; z-index: 100; background: #8B1A1A; border-bottom: 2px solid #D4AF37; }
+        
+        /* 頂部導航列：深色毛玻璃效果 */
+        .nav-header { 
+            position: sticky; top: 0; z-index: 100; 
+            background: rgba(139, 26, 26, 0.95); 
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid #D4AF37; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        /* 日期分頁標籤樣式 */
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
         
+        /* SS 標題：漸層字體與靠右對齊 */
         .ss-header { 
             font-size: 2.8rem; font-style: italic; font-weight: 900; 
             background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); 
@@ -20,24 +31,35 @@
             line-height: 1.3; display: inline-block; margin-left: auto; padding-bottom: 5px;
         }
         
-        .stage-card { background: #1a1a1a; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.2rem; overflow: hidden; }
+        /* 卡片設計：深色基調與科技邊框 */
+        .stage-card { background: #141414; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.2rem; overflow: hidden; box-shadow: inset 0 0 20px rgba(0,0,0,0.5); }
         .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
-        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
+        
+        /* 按鈕樣式 */
+        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
+        .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
+        .btn-locked { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
 
+        /* 裝飾線條 */
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
         
-        .btn-locked { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
         .status-alert { padding: 8px; font-size: 11px; font-weight: 900; text-align: center; border-radius: 10px; margin-bottom: 15px; }
-        .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
         .past-overlay { filter: grayscale(1); opacity: 0.4; pointer-events: none; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
-        
-        /* 商標專屬樣式 */
-        .brand-logo { height: 32px; width: auto; object-contain: contain; filter: drop-shadow(0 0 5px rgba(212, 175, 55, 0.3)); }
+
+        /* 科技感商標樣式 */
+        .logo-glow {
+            filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4));
+            transition: all 0.3s ease;
+        }
+        .logo-glow:hover {
+            filter: drop-shadow(0 0 12px rgba(212, 175, 55, 0.6));
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body class="pb-20">
@@ -45,13 +67,20 @@
     <nav class="nav-header">
         <div class="p-3 flex justify-between items-center">
             <div class="flex items-center gap-3">
-                <img src="logo.png" alt="SunnyHouse" class="brand-logo">
-                <div class="h-6 w-[1px] bg-white/20"></div>
-                <h1 class="tech-font text-[10px] tracking-tighter text-white italic">FLEET TERMINAL</h1>
+                <div class="relative p-1 bg-black/30 rounded-lg border border-white/10">
+                    <img src="logo.png" alt="SunnyHouse" class="h-8 w-auto object-contain logo-glow">
+                </div>
+                <div class="h-8 w-[1px] bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+                <div>
+                    <h1 class="tech-font text-[11px] tracking-widest text-white italic leading-none">FLEET</h1>
+                    <h1 class="tech-font text-[9px] tracking-tighter text-[#D4AF37] italic opacity-80">TERMINAL</h1>
+                </div>
             </div>
-            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full active:bg-[#D4AF37] active:text-black">🏆 觀看紀錄</button>
+            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-4 py-1.5 rounded-full hover:bg-[#D4AF37] hover:text-black transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                🏆 觀看紀錄
+            </button>
         </div>
-        <div id="dateScroll" class="flex overflow-x-auto px-4 py-1 gap-4 bg-[#6b1414] scrollbar-hide">
+        <div id="dateScroll" class="flex overflow-x-auto px-4 py-1 gap-4 bg-black/20 scrollbar-hide">
             <button onclick="changeDay('4/27')" class="date-tab active" id="tab-4/27">4/27</button>
             <button onclick="changeDay('4/28')" class="date-tab" id="tab-4/28">4/28</button>
             <button onclick="changeDay('4/29')" class="date-tab" id="tab-4/29">4/29</button>
@@ -63,11 +92,11 @@
     <main class="max-w-4xl mx-auto p-4">
         <div id="nav-view">
             <div class="mt-4 mb-8 px-2">
-                <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
+                <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
             <div id="dateNotice" class="hidden"></div>
-            <section id="dayOverviewSection" class="mb-8 bg-zinc-900 rounded-[2rem] p-8 border border-zinc-800">
+            <section id="dayOverviewSection" class="mb-8 bg-zinc-900/50 rounded-[2rem] p-8 border border-zinc-800">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="currentDayText" class="text-xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
                     <button id="btnDayMap" class="btn-full-day active:scale-95 transition-all">觀看全日路線</button>
@@ -78,8 +107,8 @@
         </div>
 
         <div id="record-view" class="hidden">
-            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-[10px] mb-6 flex items-center gap-1">← 返回終端</button>
-            <section class="bg-zinc-900 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] shadow-2xl mb-8 text-white text-center">
+            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-[10px] mb-6 flex items-center gap-1 uppercase tracking-widest">← BACK TO TERMINAL</button>
+            <section class="bg-zinc-900/80 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] shadow-2xl mb-8 text-white text-center">
                 <h2 id="recordNameDisplay" class="text-3xl font-black italic mb-6">---</h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
@@ -87,8 +116,8 @@
                         <p id="statKM" class="text-2xl font-black tech-font">0.0 KM</p>
                     </div>
                     <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
-                        <p class="text-[9px] text-gray-500 uppercase font-bold">Actual Total Time</p>
-                        <p id="statTime" class="text-2xl font-black tech-font text-yellow-500">0h 0m</p>
+                        <p class="text-[9px] text-gray-500 uppercase font-bold text-yellow-500">Actual Total Time</p>
+                        <p id="statTime" class="text-2xl font-black tech-font text-white">0h 0m</p>
                     </div>
                 </div>
             </section>
@@ -105,7 +134,7 @@
 
         if (!uID || !uName) window.location.href = '../index.html';
 
-        // 核心修正：將 Excel 數字日期 (46139) 轉為 4/27
+        // Excel 日期修復邏輯
         function parseDay(d) {
             if (!isNaN(d) && parseFloat(d) > 40000) {
                 const dateObj = new Date((parseFloat(d) - 25569) * 86400000);
@@ -131,7 +160,7 @@
                 const validDays = ["4/27","4/28","4/29","4/30","5/1"];
                 const startDay = validDays.includes(today) ? today : "4/27";
                 changeDay(startDay);
-            } catch (e) { alert("🛰️ 衛星連線失敗"); }
+            } catch (e) { alert("🛰️ 衛星連線超時"); }
         }
 
         async function postCheckIn(type, section) {
@@ -160,11 +189,11 @@
                     })
                 });
                 if(res.ok) {
-                    alert(`✅ ${section} ${type} 成功！\n時間：${timeStr}\n地點：${locationName}`);
+                    alert(`✅ ${section} ${type} 成功！\n時間：${timeStr}`);
                     userCheckIns.push({ CustomerID: uID, Day: day, Section: section, Type: type, Time: timeStr, Timestamp: timestamp });
                     changeDay(day);
                 }
-            } catch(e) { alert("打卡失敗，請檢查網路"); }
+            } catch(e) { alert("打卡失敗，請檢查訊號"); }
         }
 
         function switchTab(view) {
@@ -209,8 +238,8 @@
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
                 document.getElementById('dayEndpoints').innerHTML = `
-                    <div class="flex items-center"><span class="route-label label-start">Start</span><span class="route-text text-white font-bold">${dLine.Start_Point}</span></div>
-                    <div class="flex items-center"><span class="route-label label-finish">Finish</span><span class="route-text text-white font-bold">${dLine.End_Point}</span></div>
+                    <div class="flex items-center"><span class="route-label label-start">Start</span><span class="route-text text-white">${dLine.Start_Point}</span></div>
+                    <div class="flex items-center"><span class="route-label label-finish">Finish</span><span class="route-text text-white">${dLine.End_Point}</span></div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
             }
@@ -247,7 +276,7 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
-                                <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic">🧭 開啟導航</button>
+                                <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
                                     <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${startBtnClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
                                     <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${endBtnClass}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
@@ -262,7 +291,7 @@
 
         async function loadPersonalData() {
             const splitArea = document.getElementById('splitList');
-            splitArea.innerHTML = '<p class="p-10 text-center animate-pulse text-gray-500 uppercase text-[10px]">分析真實遙測數據中...</p>';
+            splitArea.innerHTML = '<p class="p-10 text-center animate-pulse text-gray-500 uppercase text-[10px]">SYNCING TELEMETRY...</p>';
             try {
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`);
                 const allChecks = await res.json();
@@ -283,7 +312,6 @@
                     sections.forEach(sec => {
                         const start = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'START');
                         const end = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'END');
-                        
                         const info = itineraryData.find(i => i.Day === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
                         
                         if (start && end) {
@@ -298,10 +326,10 @@
                     totalActualMin += dayActualMin;
                     totalKM += dayKM;
                     
-                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900 rounded-[1.5rem] border border-zinc-800 mb-1">
+                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/50 rounded-[1.5rem] border border-zinc-800 mb-1">
                         <div>
                             <p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
-                            <p class="font-black ${dayKM > 0 ? 'text-yellow-500' : 'text-zinc-800'} text-xs">${dayKM > 0 ? '✔️ DATA LOGGED' : '---'}</p>
+                            <p class="font-black ${dayKM > 0 ? 'text-yellow-500' : 'text-zinc-800'} text-xs">${dayKM > 0 ? '✔️ DATA VERIFIED' : '---'}</p>
                         </div>
                         <div class="text-right">
                             <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
@@ -311,7 +339,7 @@
                 });
 
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
-                document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${totalActualMin%60}m`;
+                document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${Math.round(totalActualMin%60)}m`;
                 splitArea.innerHTML = html;
             } catch (e) { splitArea.innerHTML = "數據加載失敗"; }
         }
