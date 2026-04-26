@@ -9,13 +9,7 @@
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
-        .nav-header { 
-            position: sticky; top: 0; z-index: 100; 
-            background: rgba(139, 26, 26, 0.95); 
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid #D4AF37; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-        }
+        .nav-header { position: sticky; top: 0; z-index: 100; background: rgba(139, 26, 26, 0.95); backdrop-filter: blur(10px); border-bottom: 2px solid #D4AF37; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
         .ss-header { font-size: 2.8rem; font-style: italic; font-weight: 900; background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.3; display: inline-block; margin-left: auto; }
@@ -27,6 +21,10 @@
         .record-sec-tag { font-size: 10px; color: #fbbf24; opacity: 0.8; margin-left: 4px; font-family: 'Orbitron'; }
         .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
+        
+        /* 鎖定按鈕樣式 */
+        .btn-locked { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
+        
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
@@ -120,30 +118,47 @@
                 itineraryData = await itiRes.json();
                 const allChecks = await checkRes.json();
                 userCheckIns = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
-                changeDay("4/27");
+                
+                // 初始化顯示當天，若當天不在清單中則顯示 4/27
+                const now = new Date();
+                const todayFormatted = `${now.getMonth() + 1}/${now.getDate()}`;
+                const validDays = ["4/27", "4/28", "4/29", "4/30", "5/1"];
+                const startDay = validDays.includes(todayFormatted) ? todayFormatted : "4/27";
+                changeDay(startDay);
             } catch (e) { alert("連線失敗"); }
         }
 
         async function postCheckIn(type, section) {
-            const day = document.querySelector('.date-tab.active').innerText;
+            const dayStr = document.querySelector('.date-tab.active').innerText; // 如 "4/28"
             const now = new Date();
+            
+            // --- 未來日期檢測邏輯 ---
+            const selectedDate = new Date(`2026/${dayStr}`);
+            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 只取年月日比對
+            
+            if (selectedDate > todayDate) {
+                alert(`🚫 任務尚未開始\n您目前選取的是未來的日期 (${dayStr})，系統無法接受提前打卡。`);
+                return;
+            }
+            // -----------------------
+
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
             const timestamp = now.toISOString();
-            const stageInfo = itineraryData.find(i => parseDay(i.Day) === day && i.Section === section);
-            const locationName = (type === 'START') ? stageInfo.Start_Point : stageInfo.End_Point;
+            const stageInfo = itineraryData.find(i => parseDay(i.Day) === dayStr && i.Section === section);
+            const locationName = (type === 'START') ? stageInfo?.Start_Point : stageInfo?.End_Point;
 
             try {
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        data: [{ CustomerID: uID, Day: day, Section: section, CheckIn_Time: timeStr, Type: type, Timestamp: timestamp, LocationName: locationName }]
+                        data: [{ CustomerID: uID, Day: dayStr, Section: section, CheckIn_Time: timeStr, Type: type, Timestamp: timestamp, LocationName: locationName }]
                     })
                 });
                 if(res.ok) {
                     alert(`✅ ${section} 打卡成功！`);
-                    userCheckIns.push({ CustomerID: uID, Day: day, Section: section, Type: type, Timestamp: timestamp });
-                    changeDay(day);
+                    userCheckIns.push({ CustomerID: uID, Day: dayStr, Section: section, Type: type, Timestamp: timestamp });
+                    changeDay(dayStr);
                 }
             } catch(e) { alert("打卡失敗"); }
         }
@@ -159,6 +174,11 @@
             const tab = document.getElementById(`tab-${day}`);
             if(tab) tab.classList.add('active');
             
+            const now = new Date();
+            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const selectedDate = new Date(`2026/${day}`);
+            const isFuture = selectedDate > todayDate;
+
             const dayData = itineraryData.filter(i => parseDay(i.Day) === day);
             const dLine = dayData.find(i => i.Section === "DayLine");
             if (dLine) {
@@ -187,7 +207,10 @@
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
                     
-                    const html = `
+                    // 未來日期按鈕變灰色
+                    const lockClass = isFuture ? "btn-locked" : "";
+
+                    return `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
                                 <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
@@ -208,11 +231,13 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
-                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
+
+                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic tracking-[0.2em]">Pilot Notes / 領航備註</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
+
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'}">${hasStart ? "已打卡" : "START 打卡"}</button>
-                                    <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
+                                    <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'} ${lockClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
+                                    <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'} ${lockClass}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
                                 </div>
                             </div>
                         </div>`;
@@ -246,8 +271,6 @@
                     sections.forEach(sec => {
                         const start = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'START');
                         const end = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'END');
-                        
-                        // 修正：在 Itinerary 表中搜尋該航段里程，日期必須也要匹配
                         const info = itineraryData.find(i => parseDay(i.Day) === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
                         
                         let actualTimeText = "Incomplete";
@@ -256,7 +279,6 @@
                             if(diffMin >= 0) {
                                 dayActualMin += diffMin;
                                 actualTimeText = diffMin >= 60 ? `${Math.floor(diffMin/60)}h ${diffMin%60}m` : `${diffMin}m`;
-                                // 只有完成的 SS 才計入公里數
                                 if(info) dayKM += (parseFloat(info.D) || 0);
                             }
                         } else if (start) {
@@ -271,19 +293,14 @@
                     totalActualMin += dayActualMin;
                     totalKM += dayKM;
                     
-                    html += `
-                        <div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1">
-                            <div class="flex-1">
-                                <p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
-                                <div class="text-[10px] font-bold text-gray-400 leading-relaxed">
-                                    ${sectionDetails.length > 0 ? sectionDetails.join(' | ') : '---'}
-                                </div>
-                            </div>
-                            <div class="text-right ml-4">
-                                <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
-                                <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
-                            </div>
-                        </div>`;
+                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1">
+                        <div><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
+                        <p class="font-black ${dayKM > 0 ? 'text-yellow-500' : 'text-zinc-800'} text-xs">${dayKM > 0 ? '✔️ DATA LOGGED' : '---'}</p></div>
+                        <div class="text-right">
+                            <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
+                            <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
+                        </div>
+                    </div>`;
                 });
 
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
