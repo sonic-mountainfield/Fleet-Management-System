@@ -10,20 +10,23 @@
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0f172a; color: #f8fafc; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         
-        /* 日期分頁樣式 */
+        /* 分頁切換 */
         .date-tab { transition: all 0.3s; border-bottom: 4px solid transparent; opacity: 0.5; white-space: nowrap; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; transform: scale(1.1); }
         
         /* 賽段卡片 */
         .stage-card { background: linear-gradient(145deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 2.5rem; overflow: hidden; }
-        .ss-title { font-size: 3.5rem; line-height: 1; letter-spacing: -0.05em; font-style: italic; background: linear-gradient(to bottom, #8B1A1A, #5e1111); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .ss-title { font-size: 3.5rem; line-height: 1; letter-spacing: -0.05em; font-style: italic; background: linear-gradient(to bottom, #8B1A1A, #b91c1c); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
         
-        /* 路點 A1 A2 標籤 */
-        .loc-badge { background-color: #000; color: #fff; width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; border: 1px solid #D4AF37; }
+        /* 路點標籤 */
+        .loc-badge { background-color: #000; color: #fff; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; border: 1px solid #D4AF37; box-shadow: 0 0 15px rgba(212, 175, 55, 0.2); }
         
-        .description-box { background: rgba(212, 175, 55, 0.05); border-left: 4px solid #D4AF37; }
-        .btn-locked { opacity: 0.3; pointer-events: none; filter: grayscale(1); }
+        .description-box { background: rgba(212, 175, 55, 0.05); border-left: 5px solid #D4AF37; }
+        .btn-locked { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
         .nav-sticky { position: sticky; top: 0; z-index: 100; background: #8B1A1A; }
+        
+        /* 名字動態漸層 */
+        .name-gradient { background: linear-gradient(to right, #fff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
     </style>
 </head>
 <body class="pb-24">
@@ -34,56 +37,60 @@
                 <div class="w-8 h-8 bg-white rounded flex items-center justify-center font-black text-[#8B1A1A]">S</div>
                 <h1 class="tech-font text-lg tracking-tighter">PILOT TERMINAL</h1>
             </div>
-            <button onclick="switchMainTab('record')" class="text-[10px] font-bold border border-white/30 px-3 py-1 rounded-full">我的紀錄</button>
+            <button onclick="switchMainTab('record')" class="text-xs font-black text-[#D4AF37] border-2 border-[#D4AF37] px-4 py-1 rounded-full active:bg-[#D4AF37] active:text-black transition-all">🏆 我的紀錄</button>
         </div>
         
-        <div id="dateTabs" class="flex overflow-x-auto px-4 py-3 gap-6 scrollbar-hide bg-[#721515]">
-            <button onclick="changeDay('4/27')" class="date-tab active font-black text-sm px-2" id="tab-4/27">4/27</button>
-            <button onclick="changeDay('4/28')" class="date-tab font-black text-sm px-2" id="tab-4/28">4/28</button>
-            <button onclick="changeDay('4/29')" class="date-tab font-black text-sm px-2" id="tab-4/29">4/29</button>
-            <button onclick="changeDay('4/30')" class="date-tab font-black text-sm px-2" id="tab-4/30">4/30</button>
-            <button onclick="changeDay('5/1')" class="date-tab font-black text-sm px-2" id="tab-5/1">5/1</button>
+        <div id="dateTabs" class="flex overflow-x-auto px-6 py-4 gap-8 bg-[#721515]">
+            <button onclick="changeDay('4/27')" class="date-tab active font-black text-base" id="tab-4/27">4/27</button>
+            <button onclick="changeDay('4/28')" class="date-tab font-black text-base" id="tab-4/28">4/28</button>
+            <button onclick="changeDay('4/29')" class="date-tab font-black text-base" id="tab-4/29">4/29</button>
+            <button onclick="changeDay('4/30')" class="date-tab font-black text-base" id="tab-4/30">4/30</button>
+            <button onclick="changeDay('5/1')" class="date-tab font-black text-base" id="tab-5/1">5/1</button>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto p-4 mt-4">
+    <main class="max-w-4xl mx-auto p-4 mt-2">
         
         <div id="nav-view">
-            <div id="dayNotice" class="hidden mb-6 p-4 rounded-2xl bg-blue-900/30 border border-blue-500/50 text-blue-400 text-xs font-bold text-center italic"></div>
+            <div class="mb-8 px-2">
+                <p class="text-xs font-bold text-slate-500 uppercase tracking-[0.3em] mb-1">Active Driver</p>
+                <h2 id="displayDriverName" class="text-5xl font-black name-gradient italic">---</h2>
+            </div>
 
-            <section id="dayOverview" class="mb-10 bg-slate-800/50 rounded-[2.5rem] p-6 border border-slate-700">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 id="currentDateTitle" class="text-2xl font-black italic">4/27 全日路線</h2>
-                    <button id="btnDayNav" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold text-sm">觀看全日路線</button>
+            <div id="dayNotice" class="hidden mb-6 p-4 rounded-2xl bg-blue-900/30 border border-blue-500/50 text-blue-400 text-xs font-bold text-center"></div>
+
+            <section class="mb-10 bg-slate-800/40 rounded-[2.5rem] p-8 border border-slate-700 shadow-inner">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 id="currentDateTitle" class="text-2xl font-black italic">4/27 ROUTE</h2>
+                    <button id="btnDayNav" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm shadow-lg active:scale-95 transition-all">觀看全日路線</button>
                 </div>
-                <div id="dayEndpoints" class="space-y-2 text-slate-400 font-bold text-sm mb-2 px-2"></div>
+                <div id="dayEndpoints" class="space-y-2 text-slate-400 font-bold text-base border-l-2 border-slate-600 pl-4"></div>
             </section>
 
-            <div id="stageContainer" class="space-y-12">
-                <div class="text-center py-20 animate-pulse text-slate-600 font-black tech-font">SYNCING SATELLITE...</div>
-            </div>
+            <div id="stageContainer" class="space-y-12"></div>
         </div>
 
-        <div id="record-view" class="hidden space-y-6">
-            <button onclick="switchMainTab('nav')" class="text-[#D4AF37] font-bold text-sm mb-4 flex items-center gap-2">← 返回導航</button>
-            <div class="bg-slate-800 p-8 rounded-[2.5rem] border-b-4 border-yellow-600">
-                <p class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">My Achievement</p>
-                <div class="flex gap-2 mb-6">
-                    <input type="text" id="inputID" placeholder="DRIVER ID" class="flex-1 bg-slate-900 border border-slate-700 p-4 rounded-xl font-bold uppercase text-white">
-                    <button onclick="fetchMyData()" class="bg-[#D4AF37] text-black px-6 rounded-xl font-black">查詢</button>
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-black/20 p-4 rounded-xl">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase">總里程</p>
-                        <p id="totalKM" class="text-2xl font-black tech-font">0.0</p>
+        <div id="record-view" class="hidden animate-fade-in">
+            <button onclick="switchMainTab('nav')" class="text-[#D4AF37] font-bold text-sm mb-6 flex items-center gap-2">← 返回導航中心</button>
+            
+            <section class="bg-slate-900 p-8 rounded-[3rem] border-b-8 border-[#8B1A1A] shadow-2xl mb-8">
+                <p id="recordUserLabel" class="text-xs font-black text-slate-500 uppercase tracking-widest mb-2">Driver Achievement</p>
+                <h2 id="recordUserName" class="text-4xl font-black text-white mb-8">---</h2>
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-slate-700">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">總里程 (KM)</p>
+                        <p id="totalKM" class="text-4xl font-black tech-font text-white">0.0</p>
                     </div>
-                    <div class="bg-black/20 p-4 rounded-xl">
-                        <p class="text-[10px] text-slate-500 font-bold uppercase">總工時</p>
-                        <p id="totalTime" class="text-2xl font-black tech-font">0h 0m</p>
+                    <div class="bg-slate-800/50 p-6 rounded-3xl border border-slate-700">
+                        <p class="text-[10px] text-slate-500 font-bold uppercase mb-2">預計時數</p>
+                        <p id="totalTime" class="text-4xl font-black tech-font text-[#D4AF37]">0h 0m</p>
                     </div>
                 </div>
-            </div>
-            <div id="splitTable" class="space-y-4"></div>
+            </section>
+
+            <div id="splitTable" class="space-y-2">
+                </div>
         </div>
 
     </main>
@@ -91,6 +98,8 @@
     <script>
         const API = 'https://sheetdb.io/api/v1/poo9epu17583p';
         let itineraryData = [];
+        const driverID = localStorage.getItem('driverID') || "U100";
+        const driverName = localStorage.getItem('driverName') || "未知隊員";
 
         function getToday() {
             const now = new Date();
@@ -98,6 +107,10 @@
         }
 
         async function init() {
+            // 顯示名字
+            document.getElementById('displayDriverName').innerText = driverName;
+            document.getElementById('recordUserName').innerText = driverName;
+
             try {
                 const res = await fetch(`${API}?sheet=Itinerary`);
                 itineraryData = await res.json();
@@ -110,10 +123,10 @@
         function switchMainTab(view) {
             document.getElementById('nav-view').classList.toggle('hidden', view !== 'nav');
             document.getElementById('record-view').classList.toggle('hidden', view !== 'record');
+            if(view === 'record') fetchMyData(); // 切換時自動刷紀錄
         }
 
         function changeDay(day) {
-            // 切換分頁樣式
             document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${day}`).classList.add('active');
 
@@ -124,14 +137,12 @@
             const isFuture = parse(day) > parse(today);
 
             if (isPast) {
-                notice.innerText = "⛔ 歷史路段：功能已鎖定";
+                notice.innerText = "⛔ 歷史行程：功能已鎖定";
                 notice.classList.remove('hidden');
             } else if (isFuture) {
-                notice.innerText = "📅 預覽模式：導航功能於當日開啟";
+                notice.innerText = "📅 預覽模式：打卡功能將於當日開啟";
                 notice.classList.remove('hidden');
-            } else {
-                notice.classList.add('hidden');
-            }
+            } else { notice.classList.add('hidden'); }
 
             const dayData = itineraryData.filter(i => i.Day === day);
             renderUI(day, dayData, isPast, isFuture);
@@ -145,61 +156,55 @@
 
             const dayInfo = data.find(i => i.Section === "DayLine");
             if (dayInfo) {
-                dayTitle.innerText = `${day} 全日路線`;
-                dayEndpoints.innerHTML = `<div>START: ${dayInfo.Start_Point}</div><div>FINISH: ${dayInfo.End_Point}</div>`;
+                dayTitle.innerText = `${day} ROUTE`;
+                dayEndpoints.innerHTML = `<p>🚩 START: ${dayInfo.Start_Point}</p><p>🏁 FINISH: ${dayInfo.End_Point}</p>`;
                 btnDay.onclick = () => window.location.href = dayInfo.Amap_Link;
                 if(isPast) btnDay.classList.add('btn-locked'); else btnDay.classList.remove('btn-locked');
             }
 
             const ssStages = data.filter(i => i.Section.startsWith("SS"));
-            container.innerHTML = ssStages.map((ss, index) => `
+            container.innerHTML = ssStages.map((ss, idx) => `
                 <div class="stage-card">
-                    <div class="p-8">
-                        <div class="flex justify-between items-start mb-6">
+                    <div class="p-10">
+                        <div class="flex justify-between items-start mb-8">
                             <h3 class="ss-title tech-font">${ss.Section}</h3>
                             <div class="text-right">
-                                <div class="text-3xl font-black tech-font text-white">${ss.D || '--'}</div>
-                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Distance KM</div>
+                                <div class="text-4xl font-black tech-font text-white">${ss.D || '--'}</div>
+                                <div class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Distance KM</div>
                             </div>
                         </div>
 
-                        <div class="space-y-8 mb-8 relative">
-                            <div class="absolute left-4 top-8 bottom-8 w-0.5 bg-slate-700"></div>
-                            
+                        <div class="space-y-10 mb-10 relative">
+                            <div class="absolute left-[17px] top-10 bottom-10 w-0.5 bg-slate-700"></div>
                             <div class="flex items-center gap-6 relative">
-                                <div class="loc-badge">A${index}</div>
+                                <div class="loc-badge">A${idx}</div>
                                 <div>
-                                    <p class="text-slate-400 text-[10px] font-black uppercase tracking-widest">Start Point</p>
-                                    <p class="text-xl font-black text-white">${ss.Start_Point}</p>
+                                    <p class="text-slate-500 text-[10px] font-black uppercase">Start</p>
+                                    <p class="text-2xl font-black text-white">${ss.Start_Point}</p>
                                 </div>
                             </div>
-
-                            <div class="flex items-center justify-between pl-14 pr-4">
-                                <div class="text-xs font-black text-[#D4AF37] italic">EST. TIME: ${ss.Est_Time || '--'}</div>
-                                <div class="text-[10px] font-bold text-slate-500 tech-font">#PILOT_DATA</div>
+                            <div class="flex items-center justify-between pl-16">
+                                <div class="text-xs font-black text-[#D4AF37] italic uppercase">EST. ${ss.Est_Time || '--'}</div>
                             </div>
-
                             <div class="flex items-center gap-6 relative">
-                                <div class="loc-badge" style="border-color:#8B1A1A">A${index+1}</div>
+                                <div class="loc-badge" style="border-color:#8B1A1A">A${idx+1}</div>
                                 <div>
-                                    <p class="text-[#8B1A1A] text-[10px] font-black uppercase tracking-widest">Finish Point</p>
-                                    <p class="text-xl font-black text-white">${ss.End_Point}</p>
+                                    <p class="text-[#8B1A1A] text-[10px] font-black uppercase">Finish</p>
+                                    <p class="text-2xl font-black text-white">${ss.End_Point}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="description-box p-5 mb-8">
-                            <p class="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-2">Description / Notes</p>
-                            <p class="text-sm font-bold leading-relaxed text-slate-300">${ss.Description || '本路段請維持通訊，注意環境變化。'}</p>
+                        <div class="description-box p-6 mb-10">
+                            <p class="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-2">Description</p>
+                            <p class="text-base font-bold leading-relaxed text-slate-300">${ss.Description || '保持安全駕駛。'}</p>
                         </div>
 
-                        <button onclick="window.location.href='${ss.Amap_Link}'" class="w-full py-5 bg-white text-black font-black text-xl rounded-2xl mb-6 active:scale-95 transition-all ${isPast ? 'btn-locked' : ''}">
-                            🧭 開啟導航
-                        </button>
+                        <button onclick="window.location.href='${ss.Amap_Link}'" class="w-full py-6 bg-white text-black font-black text-xl rounded-2xl mb-6 shadow-xl active:scale-95 transition-all ${isPast ? 'btn-locked' : ''}">🧭 開啟導航</button>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <button class="bg-[#8B1A1A] py-5 rounded-2xl font-black text-white ${(isPast || isFuture) ? 'btn-locked' : ''}">START 打卡</button>
-                            <button class="bg-transparent border-2 border-[#8B1A1A] py-5 rounded-2xl font-black text-[#8B1A1A] ${(isPast || isFuture) ? 'btn-locked' : ''}">FINISH 打卡</button>
+                            <button class="bg-[#8B1A1A] py-6 rounded-2xl font-black text-white ${(isPast || isFuture) ? 'btn-locked' : ''}">START</button>
+                            <button class="border-2 border-[#8B1A1A] py-6 rounded-2xl font-black text-[#8B1A1A] ${(isPast || isFuture) ? 'btn-locked' : ''}">FINISH</button>
                         </div>
                     </div>
                 </div>
@@ -207,23 +212,44 @@
         }
 
         async function fetchMyData() {
-            const id = document.getElementById('inputID').value.toUpperCase();
-            if(!id) return;
-            const res = await fetch(`${API}?sheet=CheckIns`);
-            const checks = await res.json();
-            const myEnds = checks.filter(r => r.CustomerID === id && r.Type === 'END');
+            const splitArea = document.getElementById('splitTable');
+            splitArea.innerHTML = '<p class="p-20 text-center animate-pulse text-slate-600 font-bold">同步衛星數據中...</p>';
             
-            let km = 0, min = 0;
-            myEnds.forEach(r => {
-                const info = itineraryData.find(i => i.Section.toLowerCase() === r.Section.toLowerCase() && i.Day === r.Day);
-                if(info) {
-                    km += parseFloat(info.D || 0);
-                    const t = info.Est_Time || "";
-                    min += (parseInt(t.match(/(\d+)hr/)?.[1] || 0) * 60) + parseInt(t.match(/(\d+)min/)?.[1] || 0);
-                }
-            });
-            document.getElementById('totalKM').innerText = km.toFixed(1);
-            document.getElementById('totalTime').innerText = `${Math.floor(min/60)}h ${min%60}m`;
+            try {
+                const res = await fetch(`${API}?sheet=CheckIns`);
+                const checks = await res.json();
+                const myEnds = checks.filter(r => r.CustomerID === driverID && r.Type === 'END');
+                
+                let km = 0, min = 0;
+                const days = ["4/27","4/28","4/29","4/30","5/1"];
+                let html = "";
+
+                days.forEach(d => {
+                    const dayDone = myEnds.filter(r => r.Day === d);
+                    let dKm = 0;
+                    dayDone.forEach(r => {
+                        const info = itineraryData.find(i => i.Section.toLowerCase() === r.Section.toLowerCase() && i.Day === r.Day);
+                        if(info) {
+                            const dk = parseFloat(info.D || 0);
+                            dKm += dk; km += dk;
+                            min += (parseInt(info.Est_Time.match(/(\d+)hr/)?.[1] || 0) * 60) + parseInt(info.Est_Time.match(/(\d+)min/)?.[1] || 0);
+                        }
+                    });
+                    html += `
+                        <div class="flex justify-between p-6 bg-slate-800/30 rounded-2xl mb-2 border border-slate-800">
+                            <div class="font-black text-slate-500">${d}</div>
+                            <div class="text-right">
+                                <div class="text-xl font-black tech-font text-white">${dKm.toFixed(1)} <small class="text-[10px]">KM</small></div>
+                                <div class="text-[10px] font-bold text-slate-600 uppercase tracking-widest">${dayDone.length} STAGES DONE</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('totalKM').innerText = km.toFixed(1);
+                document.getElementById('totalTime').innerText = `${Math.floor(min/60)}h ${min%60}m`;
+                splitArea.innerHTML = html;
+            } catch (e) { splitArea.innerHTML = "數據加載錯誤"; }
         }
 
         init();
