@@ -12,17 +12,31 @@
         .nav-header { position: sticky; top: 0; z-index: 100; background: #8B1A1A; border-bottom: 2px solid #D4AF37; }
         .date-tab { transition: 0.3s; opacity: 0.5; color: white; padding: 10px 16px; font-weight: 900; border-bottom: 3px solid transparent; font-size: 0.9rem; }
         .date-tab.active { opacity: 1; border-color: #D4AF37; color: #D4AF37; }
-        .ss-header { font-size: 2.8rem; font-style: italic; font-weight: 900; background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.3; display: inline-block; margin-left: auto; }
+        
+        /* SS 標題靠右且防裁切 */
+        .ss-header { 
+            font-size: 2.8rem; font-style: italic; font-weight: 900; 
+            background: linear-gradient(to bottom, #8B1A1A, #ff4d4d); 
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; 
+            line-height: 1.3; display: inline-block; margin-left: auto; padding-bottom: 5px;
+        }
+        
         .stage-card { background: #1a1a1a; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.2rem; overflow: hidden; }
         .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
         .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
+
         .note-strip { background: rgba(212, 175, 55, 0.08); border: 1px dashed rgba(212, 175, 55, 0.5); border-radius: 0.8rem; padding: 0.8rem 1.2rem; margin-bottom: 1rem; display: flex; align-items: flex-start; gap: 0.8rem; }
+        .note-time { color: #D4AF37; font-family: 'Orbitron'; font-weight: 900; font-size: 0.85rem; min-width: 75px; }
+
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
+        .description-box { background: rgba(212, 175, 55, 0.03); border-left: 4px solid #D4AF37; padding: 0.8rem; border-radius: 0 0.8rem 0.8rem 0; margin-bottom: 1.2rem; }
+        
         .btn-locked { opacity: 0.15; pointer-events: none; filter: grayscale(1); }
+        .status-alert { padding: 8px; font-size: 11px; font-weight: 900; text-align: center; border-radius: 10px; margin-bottom: 15px; }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
         .past-overlay { filter: grayscale(1); opacity: 0.4; pointer-events: none; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -49,7 +63,7 @@
 
     <main class="max-w-4xl mx-auto p-4">
         <div id="nav-view">
-            <div class="mt-4 mb-8 px-2 text-white">
+            <div class="mt-4 mb-8 px-2">
                 <p class="text-[9px] font-black text-gray-500 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
@@ -57,9 +71,9 @@
             <section id="dayOverviewSection" class="mb-8 bg-zinc-900 rounded-[2rem] p-8 border border-zinc-800">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="currentDayText" class="text-xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
-                    <button id="btnDayMap" class="btn-full-day active:scale-95 transition-all">觀看全日路線</button>
+                    <button id="btnDayMap" class="btn-full-day">觀看全日路線</button>
                 </div>
-                <div id="dayEndpoints" class="space-y-4 border-l-4 border-gray-700 pl-6"></div>
+                <div id="dayEndpoints" class="space-y-4 border-l-4 border-gray-700 pl-6 text-white font-bold"></div>
             </section>
             <div id="stageContainer" class="space-y-1"></div>
         </div>
@@ -79,7 +93,7 @@
                     </div>
                 </div>
             </section>
-            <div id="splitList" class="space-y-2"></div>
+            <div id="splitList" class="space-y-1"></div>
         </div>
     </main>
 
@@ -100,7 +114,6 @@
                     fetch(`${API_BASE}?sheet=Itinerary`),
                     fetch(`${API_BASE}?sheet=CheckIns`)
                 ]);
-                if (!itiRes.ok || !checkRes.ok) throw new Error("API Error");
                 itineraryData = await itiRes.json();
                 const allChecks = await checkRes.json();
                 userCheckIns = allChecks.filter(r => r.CustomerID === uID);
@@ -110,15 +123,20 @@
                 const validDays = ["4/27","4/28","4/29","4/30","5/1"];
                 const startDay = validDays.includes(today) ? today : "4/27";
                 changeDay(startDay);
-            } catch (e) { alert("衛星連線失敗，請檢查網路環境"); }
+            } catch (e) { alert("🛰️ 衛星連線失敗"); }
         }
 
-        // 打卡函數：串接 SheetDB POST
+        // 核心打卡函數：包含時間與地點自動抓取
         async function postCheckIn(type, section) {
             const day = document.querySelector('.date-tab.active').innerText;
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
-            
+            const timestamp = now.toISOString();
+
+            // 抓取地點
+            const stageInfo = itineraryData.find(i => i.Day === day && i.Section === section);
+            const locationName = (type === 'START') ? stageInfo.Start_Point : stageInfo.End_Point;
+
             try {
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`, {
                     method: 'POST',
@@ -126,17 +144,20 @@
                     body: JSON.stringify({
                         data: [{
                             CustomerID: uID,
-                            CustomerName: uName,
                             Day: day,
                             Section: section,
+                            CheckIn_Time: timeStr,
                             Type: type,
-                            Time: timeStr
+                            Timestamp: timestamp,
+                            LocationName: locationName
                         }]
                     })
                 });
                 if(res.ok) {
-                    alert(`${section} ${type} 成功！`);
-                    init(); // 重新整理狀態
+                    alert(`✅ ${section} ${type} 成功！\n時間：${timeStr}\n地點：${locationName}`);
+                    // 即時更新本地狀態
+                    userCheckIns.push({ CustomerID: uID, Day: day, Section: section, Type: type, Time: timeStr });
+                    changeDay(day);
                 }
             } catch(e) { alert("打卡失敗，請檢查網路"); }
         }
@@ -161,20 +182,20 @@
             const notice = document.getElementById('dateNotice');
             const overview = document.getElementById('dayOverviewSection');
             const container = document.getElementById('stageContainer');
+            
             let status = "current";
-
             overview.classList.remove('past-overlay');
             container.classList.remove('past-overlay');
 
             if (selectedDate < currentDate) {
                 status = "past";
-                notice.className = "status-alert bg-gray-800 text-gray-500 block p-2 text-center text-xs rounded-xl mb-4";
+                notice.className = "status-alert bg-gray-800 text-gray-500 block";
                 notice.innerText = `⛔ ${day} 行程已結束`;
                 overview.classList.add('past-overlay');
                 container.classList.add('past-overlay');
             } else if (selectedDate > currentDate) {
                 status = "future";
-                notice.className = "status-alert bg-blue-900/30 text-blue-400 block p-2 text-center text-xs rounded-xl mb-4";
+                notice.className = "status-alert bg-blue-900/30 text-blue-400 block";
                 notice.innerText = `📅 預覽 ${day} 內容`;
             } else { notice.classList.add('hidden'); }
 
@@ -183,8 +204,8 @@
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
                 document.getElementById('dayEndpoints').innerHTML = `
-                    <div class="flex items-center"><span class="route-label label-start">Start</span><span class="route-text text-white font-bold">${dLine.Start_Point}</span></div>
-                    <div class="flex items-center"><span class="route-label label-finish">Finish</span><span class="route-text text-white font-bold">${dLine.End_Point}</span></div>
+                    <div class="flex items-center"><span class="route-label label-start">Start</span><span class="route-text">${dLine.Start_Point}</span></div>
+                    <div class="flex items-center"><span class="route-label label-finish">Finish</span><span class="route-text">${dLine.End_Point}</span></div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
             }
@@ -193,13 +214,13 @@
             let ssCounter = 0;
             container.innerHTML = mainContent.map((item) => {
                 if (item.Section === "Note") {
-                    return `<div class="note-strip"><div class="note-time">${item.T || ''}</div><div class="note-text text-xs text-gray-400 font-bold">${item.Description || ''}</div></div>`;
+                    return `<div class="note-strip"><div class="note-time">${item.T || ''}</div><div class="note-text text-sm font-bold text-gray-400">${item.Description || ''}</div></div>`;
                 } else if (item.Section.startsWith("SS")) {
                     const hasStart = userCheckIns.some(c => c.Day === day && c.Section === item.Section && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => c.Day === day && c.Section === item.Section && c.Type === 'END');
                     const startBtnClass = hasStart ? "btn-done" : (status !== "current" ? "btn-locked" : "bg-[#8B1A1A]");
                     const endBtnClass = hasEnd ? "btn-done" : (status !== "current" ? "btn-locked" : "border border-[#333]");
-                    
+
                     const html = `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
@@ -221,6 +242,7 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
+                                ${item.Description ? `<div class="description-box"><p class="text-[9px] text-[#D4AF37] font-black uppercase mb-1">Pilot Notes</p><p class="text-sm font-bold text-gray-300">${item.Description}</p></div>` : ''}
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
                                     <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${startBtnClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
@@ -236,7 +258,7 @@
 
         async function loadPersonalData() {
             const splitArea = document.getElementById('splitList');
-            splitArea.innerHTML = '<p class="p-10 text-center animate-pulse text-gray-500">正在同步衛星紀錄...</p>';
+            splitArea.innerHTML = '<p class="p-10 text-center animate-pulse text-gray-500">正在分析紀錄數據...</p>';
             try {
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`);
                 const allChecks = await res.json();
