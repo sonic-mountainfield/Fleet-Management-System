@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>陽光小屋車隊 - 導航終端</title>
+    <title>SUNNY HOUSE - 專業導航終端</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
@@ -17,6 +17,10 @@
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; }
         .line-connector { position: absolute; left: 20px; top: 45px; bottom: 45px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 4rem; line-height: 1.1; }
+        
+        /* 修正 Description 樣式 */
+        .description-box { background: rgba(212, 175, 55, 0.05); border-left: 6px solid #D4AF37; padding: 1.2rem; border-radius: 0 1.2rem 1.2rem 0; margin-bottom: 2rem; }
+        
         .scrollbar-hide::-webkit-scrollbar { display: none; }
     </style>
 </head>
@@ -42,7 +46,7 @@
     <main class="max-w-4xl mx-auto p-4 mt-2">
         <div id="nav-view">
             <div class="mt-6 mb-10 px-2">
-                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.5em] mb-1">Authenticated Commander</p>
+                <p class="text-[10px] font-black text-gray-500 uppercase tracking-[0.5em] mb-1 text-white">Authenticated Commander</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
             <section class="mb-12 bg-zinc-900 rounded-[2.5rem] p-8 border border-zinc-800">
@@ -50,19 +54,19 @@
                     <h2 id="currentDayText" class="text-2xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
                     <button id="btnDayMap" class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-black text-sm active:scale-95 transition-all shadow-lg">全日地圖</button>
                 </div>
-                <div id="dayEndpoints" class="space-y-2 text-gray-400 font-bold text-lg border-l-4 border-gray-700 pl-6"></div>
+                <div id="dayEndpoints" class="space-y-2 text-gray-400 font-bold text-lg border-l-4 border-gray-700 pl-6 text-white"></div>
             </section>
             <div id="stageContainer" class="space-y-2"></div>
         </div>
 
         <div id="record-view" class="hidden">
-            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-sm mb-8 flex items-center gap-2">← BACK TO NAVIGATION</button>
+            <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-sm mb-8 flex items-center gap-2">← BACK</button>
             <div class="bg-zinc-900 p-10 rounded-[3rem] border-b-[12px] border-[#8B1A1A] shadow-2xl mb-10">
-                <h2 id="recordNameDisplay" class="text-5xl font-black text-white italic mb-10 text-white">---</h2>
-                <div class="grid grid-cols-2 gap-8 text-white">
+                <h2 id="recordNameDisplay" class="text-5xl font-black text-white italic mb-10">---</h2>
+                <div class="grid grid-cols-2 gap-8 text-white text-center">
                     <div class="bg-black/50 p-8 rounded-[2rem] border border-gray-800">
                         <p class="text-[10px] text-gray-500 uppercase font-bold">Total KM</p>
-                        <p id="statKM" class="text-4xl font-black tech-font text-white">0.0</p>
+                        <p id="statKM" class="text-4xl font-black tech-font">0.0</p>
                     </div>
                     <div class="bg-black/50 p-8 rounded-[2rem] border border-gray-800">
                         <p class="text-[10px] text-gray-500 uppercase font-bold">Total Time</p>
@@ -77,32 +81,23 @@
     <script>
         const API_BASE = 'https://sheetdb.io/api/v1/poo9epu17583p';
         let itineraryData = [];
-
-        // 讀取登入資訊
         const uID = localStorage.getItem('driverID');
         const uName = localStorage.getItem('driverName');
 
-        if (!uID || !uName) {
-            // 回到根目錄登入
-            window.location.href = '../index.html';
-        }
+        if (!uID || !uName) window.location.href = '../index.html';
 
         async function init() {
             document.getElementById('userNameDisplay').innerText = uName;
             document.getElementById('recordNameDisplay').innerText = uName;
-
             try {
                 const res = await fetch(`${API_BASE}?sheet=Itinerary`);
                 itineraryData = await res.json();
-                
-                // 獲取手機日期
                 const now = new Date();
                 const today = `${now.getMonth() + 1}/${now.getDate()}`;
                 const validDays = ["4/27","4/28","4/29","4/30","5/1"];
                 const startDay = validDays.includes(today) ? today : "4/27";
-                
                 changeDay(startDay);
-            } catch (e) { console.error("數據讀取錯誤"); }
+            } catch (e) { console.error("API Load Fail"); }
         }
 
         function switchTab(view) {
@@ -115,42 +110,48 @@
         function changeDay(day) {
             document.querySelectorAll('.date-tab').forEach(t => t.classList.remove('active'));
             document.getElementById(`tab-${day}`).classList.add('active');
-
-            const dayData = itineraryData.filter(i => i.Day === day);
-            const dLine = dayData.find(i => i.Section === "DayLine");
+            const data = itineraryData.filter(i => i.Day === day);
+            const dLine = data.find(i => i.Section === "DayLine");
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
                 document.getElementById('dayEndpoints').innerHTML = `<p>START: ${dLine.Start_Point}</p><p>FINISH: ${dLine.End_Point}</p>`;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
             }
-
-            const ssStages = dayData.filter(i => i.Section.startsWith("SS"));
+            const ssStages = data.filter(i => i.Section.startsWith("SS"));
             document.getElementById('stageContainer').innerHTML = ssStages.map((ss, idx) => `
                 <div class="stage-card shadow-2xl">
                     <div class="p-10">
                         <div class="flex justify-between items-start mb-10">
                             <h3 class="ss-header tech-font">${ss.Section}</h3>
-                            <div class="text-right text-4xl font-black tech-font text-white">${ss.D}</div>
+                            <div class="text-right text-4xl font-black tech-font text-white">${ss.D} <small class="text-lg">Km</small></div>
                         </div>
                         <div class="space-y-12 mb-10 relative">
                             <div class="line-connector"></div>
                             <div class="flex items-center gap-8 relative">
                                 <div class="loc-badge">A${idx}</div>
-                                <div><p class="text-gray-500 text-[10px] font-black uppercase tracking-widest">Start Point</p><p class="text-3xl font-black text-white leading-tight">${ss.Start_Point}</p></div>
+                                <div>
+                                    <p class="text-gray-500 text-[10px] font-black uppercase tracking-widest">Start Point</p>
+                                    <p class="text-3xl font-black text-white leading-tight">${ss.Start_Point}</p>
+                                </div>
                             </div>
                             <div class="flex items-center gap-8 relative">
                                 <div class="loc-badge" style="border-color:#8B1A1A">A${idx+1}</div>
-                                <div><p class="text-[#8B1A1A] text-[10px] font-black uppercase tracking-widest">Finish Point</p><p class="text-3xl font-black text-white leading-tight">${ss.End_Point}</p></div>
+                                <div>
+                                    <p class="text-[#8B1A1A] text-[10px] font-black uppercase tracking-widest">Finish Point</p>
+                                    <p class="text-3xl font-black text-white leading-tight">${ss.End_Point}</p>
+                                </div>
                             </div>
                         </div>
-                        <div class="description-box mb-10">
-                            <p class="text-[10px] font-black text-[#D4AF37] uppercase tracking-widest mb-3 italic">Pilot Notes</p>
-                            <p class="text-lg font-bold leading-relaxed text-gray-300">${ss.Description || '安全駕駛。'}</p>
+
+                        <div class="description-box">
+                            <p class="text-[10px] text-[#D4AF37] font-black uppercase mb-1 tracking-[0.2em]">Pilot Notes</p>
+                            <p class="text-lg font-bold text-gray-300">${ss.Description || '安全駕駛。'}</p>
                         </div>
-                        <button onclick="window.open('${ss.Amap_Link}')" class="w-full py-7 bg-white text-black font-black text-2xl rounded-[1.5rem] mb-6 shadow-2xl">🧭 開啟導航</button>
+
+                        <button onclick="window.open('${ss.Amap_Link}')" class="w-full py-7 bg-white text-black font-black text-2xl rounded-2xl mb-6 shadow-2xl active:scale-95 transition-all italic">🧭 開啟導航</button>
                         <div class="grid grid-cols-2 gap-5">
                             <button class="bg-[#8B1A1A] py-6 rounded-[1.5rem] font-black text-white text-lg">START 打卡</button>
-                            <button class="border-2 border-[#8B1A1A] py-6 rounded-[1.5rem] font-black text-[#8B1A1A] text-lg">FINISH 打卡</button>
+                            <button class="border-2 border-[#333] py-6 rounded-[1.5rem] font-black text-gray-500 text-lg">FINISH 打卡</button>
                         </div>
                     </div>
                 </div>
@@ -179,14 +180,14 @@
                     tk += dk;
                     html += `
                         <div class="flex justify-between items-center p-8 bg-zinc-900 rounded-[2rem] border border-zinc-800 mb-2">
-                            <div><p class="text-[10px] text-gray-500 mb-1 uppercase">${d}</p><p class="font-black ${dayDone.length > 0 ? 'text-[#D4AF37]' : 'text-zinc-800'}">${dayDone.length > 0 ? '✔️ COMPLETE' : '---'}</p></div>
+                            <div><p class="text-[10px] text-gray-500 mb-1 uppercase">${d}</p><p class="font-black ${dayDone.length > 0 ? 'text-[#D4AF37]' : 'text-zinc-800'} text-white">${dayDone.length > 0 ? '✔️ COMPLETE' : '---'}</p></div>
                             <div class="text-right text-2xl font-black tech-font text-white">${dk.toFixed(1)} KM</div>
                         </div>`;
                 });
                 document.getElementById('statKM').innerText = tk.toFixed(1);
                 document.getElementById('statTime').innerText = `${Math.floor(tm/60)}h ${tm%60}m`;
                 splitArea.innerHTML = html;
-            } catch (e) { splitArea.innerHTML = "數據加載錯誤"; }
+            } catch (e) { splitArea.innerHTML = "數據加載出錯"; }
         }
 
         init();
