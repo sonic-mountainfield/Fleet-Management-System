@@ -34,7 +34,7 @@
     </nav>
 
     <div id="itineraryContainer" class="p-4 space-y-6">
-        <div class="text-center py-20 text-[#8B1A1A] font-bold italic animate-pulse">扎西德勒，載入中...</div>
+        <div class="text-center py-20 text-[#8B1A1A] font-bold italic animate-pulse">扎西德勒，載入行程中...</div>
     </div>
 
     <div class="fixed bottom-0 w-full bg-white border-t border-[#D4AF37] flex justify-around py-4 shadow-2xl z-50">
@@ -42,7 +42,7 @@
             <span class="text-2xl">🗺️</span>
             <span class="text-[10px] font-bold">每日路書</span>
         </div>
-        <div onclick="alert('完賽證書將於所有行程結束後生成')" class="flex flex-col items-center text-gray-300">
+        <div onclick="alert('完賽證書將於第六天打卡後生成')" class="flex flex-col items-center text-gray-300">
             <span class="text-2xl">📜</span>
             <span class="text-[10px] font-bold">榮譽證書</span>
         </div>
@@ -55,64 +55,69 @@
         if (!user) {
             window.location.href = '../index.html';
         } else {
-            document.getElementById('userDisplay').innerText = `駕駛員：${user.NAME || user.Name || 'ACE'}`;
+            // 讀取 Users 表的 NAME
+            document.getElementById('userDisplay').innerText = `隊員：${user.NAME || user.Name || '成員'}`;
         }
 
         async function loadItinerary() {
             try {
                 const response = await fetch('https://sheetdb.io/api/v1/poo9epu17583p?sheet=Itinerary');
                 const data = await response.json();
-                console.log("偵錯用 - API 原始數據:", data); // 您可以在瀏覽器 F12 看到欄位名稱到底是什麼
-                renderCardsByGroup(data);
+                renderCards(data);
             } catch (e) {
                 document.getElementById('itineraryContainer').innerHTML = "<p class='text-center text-red-600 font-bold'>讀取失敗</p>";
             }
         }
 
-        function renderCardsByGroup(items) {
+        function renderCards(items) {
             const container = document.getElementById('itineraryContainer');
             container.innerHTML = "";
 
+            // 按日期分組
             const groups = items.reduce((acc, item) => {
-                const day = item.Day || item.day || "未定日期";
+                const day = item.Day || item.day || "行程日期";
                 if (!acc[day]) acc[day] = [];
                 acc[day].push(item);
                 return acc;
             }, {});
 
             Object.keys(groups).forEach(day => {
+                // 插入大日期標籤
                 const dateHeader = document.createElement('div');
                 dateHeader.className = "date-header text-white p-3 mt-8 mb-4 shadow-md flex items-baseline gap-2";
                 dateHeader.innerHTML = `
-                    <span class="text-3xl font-black italic tracking-tighter">${day}</span>
-                    <span class="text-xs font-bold text-[#D4AF37] opacity-80 uppercase">Race Day</span>
+                    <span class="text-4xl font-black italic tracking-tighter">${day}</span>
+                    <span class="text-xs font-bold text-[#D4AF37] opacity-80 uppercase tracking-widest">Race Day</span>
                 `;
                 container.appendChild(dateHeader);
 
+                // 渲染該日賽段
                 groups[day].forEach(ss => {
-                    // --- 強制讀取機制：同時嘗試大寫與小寫名稱 ---
-                    const displayTitle = ss.Title || ss.title || "未知賽段";
-                    const displayDistance = ss.Distance || ss.distance || "--";
-                    const displayEstTime = ss.Est_Time || ss.est_time || "--";
+                    // --- 關鍵修改：對應您的 T 與 D 欄位 ---
+                    const displayTitle = ss.T || ss.t || "未命名賽段"; 
+                    const displayDistance = ss.D || ss.d || "--";
+                    
+                    // 其他欄位維持不變
                     const displayStart = ss.Start_Point || ss.start_point || "起點";
                     const displayEnd = ss.End_Point || ss.end_point || "終點";
+                    const displayEstTime = ss.Est_Time || ss.est_time || "--";
                     const displayDesc = ss.Description || ss.description || "";
                     const displayLink = ss.Amap_Link || ss.amap_link || "#";
                     const displaySection = ss.Section || ss.section || "SS";
 
                     const card = document.createElement('div');
-                    card.className = "tibet-card bg-white rounded-2xl shadow-xl p-6 relative mb-6";
+                    card.className = "tibet-card bg-white rounded-2xl shadow-xl p-6 relative mb-8";
                     card.innerHTML = `
                         <div class="line-draw"></div>
                         <div class="flex justify-between items-center mb-6 relative z-10">
-                            <span class="bg-[#8B1A1A] text-white text-[10px] px-3 py-1 rounded-full font-bold">賽段模式</span>
+                            <span class="bg-[#8B1A1A] text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase tracking-widest">Special Stage</span>
                         </div>
 
                         <div class="flex items-start gap-4 mb-8 relative z-10">
-                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs">A0</div>
+                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A0</div>
                             <div class="flex-1">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">Start Point</p>
-                                <h3 class="text-lg font-bold text-gray-800 leading-tight">${displayStart}</h3>
+                                <h3 class="text-md font-bold text-gray-800 leading-tight">${displayStart}</h3>
                             </div>
                         </div>
 
@@ -120,13 +125,13 @@
                             <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${displaySection}</div>
                             <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">
                                 <h4 class="font-black text-[#8B1A1A] text-md">${displayTitle}</h4>
-                                <div class="flex gap-4 mt-2 text-[11px] text-gray-500 font-bold uppercase">
+                                <div class="flex gap-4 mt-2 text-[11px] text-gray-500 font-bold">
                                     <span>里程: ${displayDistance}</span>
                                     <span>預計: ${displayEstTime}</span>
                                 </div>
                                 <p class="text-[11px] text-gray-400 mt-2 italic">${displayDesc}</p>
                                 <button onclick="window.location.href='${displayLink}&callnative=1'" 
-                                        class="w-full mt-4 bg-[#3385ff] text-white py-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
+                                        class="w-full mt-4 bg-[#3385ff] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
                                     <img src="https://img.icons8.com/color/48/amap.png" class="h-4 w-4">
                                     啟動專屬路線導航
                                 </button>
@@ -134,18 +139,18 @@
                         </div>
 
                         <div class="flex items-start gap-4 relative z-10">
-                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs">A1</div>
+                            <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A1</div>
                             <div class="flex-1">
                                 <p class="text-[10px] font-bold text-gray-400 uppercase tracking-tighter">End Point</p>
-                                <h3 class="text-lg font-bold text-gray-800 leading-tight">${displayEnd}</h3>
+                                <h3 class="text-md font-bold text-gray-800 leading-tight">${displayEnd}</h3>
                             </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4 mt-10 pt-6 border-t border-gray-100 relative z-10">
                             <button onclick="handleCheckIn('${displaySection}', 'START', '${displayStart}')" 
-                                    class="bg-[#8B1A1A] text-white py-4 rounded-xl font-bold text-xs shadow-xl active:bg-black">A0 打卡</button>
+                                    class="bg-[#8B1A1A] text-white py-4 rounded-xl font-bold text-xs shadow-xl active:bg-black transition-colors">A0 打卡</button>
                             <button onclick="handleCheckIn('${displaySection}', 'END', '${displayEnd}')" 
-                                    class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-4 rounded-xl font-bold text-xs active:bg-gray-100">A1 打卡</button>
+                                    class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-4 rounded-xl font-bold text-xs active:bg-gray-100 transition-colors">A1 打卡</button>
                         </div>
                     `;
                     container.appendChild(card);
@@ -156,7 +161,7 @@
         window.handleCheckIn = async function(section, type, locName) {
             const btn = event.target;
             const originalText = btn.innerText;
-            btn.innerText = "寫入中...";
+            btn.innerText = "傳輸中...";
             btn.disabled = true;
 
             const success = await doCheckIn(section, type, locName);
@@ -164,11 +169,11 @@
                 btn.innerText = "✓ 已打卡";
                 btn.classList.add('opacity-50');
                 btn.disabled = true;
-                alert(`【${section}】打卡成功！`);
+                alert(`【${section}】${type} 打卡成功！扎西德勒！`);
             } else {
                 btn.innerText = originalText;
                 btn.disabled = false;
-                alert("打卡失敗");
+                alert("打卡失敗，請檢查網路連線");
             }
         };
 
