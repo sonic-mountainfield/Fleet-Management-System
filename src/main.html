@@ -33,7 +33,7 @@
         /* 卡片設計 */
         .stage-card { background: #141414; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.5rem; overflow: hidden; }
         
-        /* 1. Note 區塊文字方塊化樣式 */
+        /* 1. Note 區塊強化樣式 */
         .note-container {
             background: rgba(212, 175, 55, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.4);
@@ -41,6 +41,27 @@
             border-radius: 1.2rem;
             padding: 1.5rem;
             margin-bottom: 1.5rem;
+        }
+
+        /* 加大明顯的標題標籤 */
+        .note-badge {
+            background: #D4AF37;
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 顯著的時間字體 */
+        .note-time-display {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 20px; /* 大字體 */
+            color: #D4AF37;
+            font-weight: 900;
+            margin-left: 12px;
         }
 
         /* 2. SS 描述文字盒：Pilot Notes */
@@ -58,7 +79,7 @@
         .label-start { background: #D4AF37; color: #000; }
         .label-finish { background: #8B1A1A; color: #fff; }
         
-        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
+        .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3); }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
@@ -202,7 +223,6 @@
                     <div class="flex items-center"><span class="route-label label-finish">Finish</span>${dLine.End_Point}</div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
-                // 修復：每日總體 Description 顯示邏輯
                 document.getElementById('dayDescription').innerText = dLine.Description || "";
             }
 
@@ -210,14 +230,13 @@
             let ssCounter = 0;
             document.getElementById('stageContainer').innerHTML = mainContent.map((item) => {
                 if (item.Section === "Note") {
-                    // Note 方塊化渲染
                     return `
                         <div class="note-container">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="tech-font text-[#D4AF37] text-[10px] font-black uppercase tracking-widest italic">Pilot Briefing</span>
-                                <span class="text-[10px] text-gray-500 font-bold tech-font">${item.T || ''}</span>
+                            <div class="flex items-center mb-4">
+                                <span class="note-badge tech-font">Pilot Briefing</span>
+                                <span class="note-time-display">${item.T || ''}</span>
                             </div>
-                            <div class="text-sm font-black text-white leading-relaxed">${item.Description || ''}</div>
+                            <div class="text-base font-black text-white leading-relaxed border-t border-white/5 pt-3">${item.Description || ''}</div>
                         </div>`;
                 } else if (item.Section.startsWith("SS")) {
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
