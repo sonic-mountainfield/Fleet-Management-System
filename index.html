@@ -30,7 +30,7 @@
 
             <div class="space-y-6">
                 <div class="text-left">
-                    <label class="text-gray-400 text-xs font-black mb-3 block text-center uppercase tracking-widest">請輸入您的出生年月日</label>
+                    <label class="text-gray-400 text-xs font-black mb-3 block text-center uppercase tracking-widest">請輸入您的出生年月日 (YYYYMMDD)</label>
                     <input type="number" id="birthday" placeholder="例如：19861126" 
                         class="input-box w-full p-5 rounded-2xl font-black placeholder:text-gray-700">
                 </div>
@@ -51,7 +51,10 @@
             const passInput = document.getElementById('birthday').value.trim();
             const btn = document.getElementById('loginBtn');
 
-            if (!passInput) return alert("請輸入生日");
+            if (!passInput || passInput.length !== 8) {
+                alert("請輸入正確的 8 位數生日格式 (YYYYMMDD)");
+                return;
+            }
 
             btn.disabled = true;
             btn.innerText = "衛星驗證中...";
@@ -64,9 +67,8 @@
                 const user = users.find(u => String(u.Birthday) === passInput);
 
                 if (user) {
-                    // 儲存資訊 (這兩項是 main.html 運行的關鍵)
                     localStorage.setItem('driverID', user.ID);
-                    localStorage.setItem('driverName', user.N); // 讀取 Excel 中的 N 欄位
+                    localStorage.setItem('driverName', user.N); // 對應 Excel 的 N 欄位
                     
                     // 指向 src 資料夾下的 main.html
                     window.location.href = './src/main.html';
@@ -75,7 +77,7 @@
                     resetBtn();
                 }
             } catch (error) {
-                alert("網路連線失敗，請稍後再試");
+                alert("網路連線失敗，請檢查網路連線");
                 resetBtn();
             }
         }
