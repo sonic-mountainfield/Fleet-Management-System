@@ -30,29 +30,22 @@
         
         .stage-card { background: #141414; border: 1px solid #333; border-radius: 2rem; margin-bottom: 1.5rem; overflow: hidden; }
         
-        /* Note 樣式 */
         .note-container {
             background: rgba(212, 175, 55, 0.1);
             border: 1px solid rgba(212, 175, 55, 0.4);
             border-left: 8px solid #D4AF37;
-            border-radius: 1.2rem;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            border-radius: 1.2rem; padding: 1.5rem; margin-bottom: 1.5rem;
         }
         .note-badge { background: #D4AF37; color: #000; padding: 4px 12px; border-radius: 6px; font-size: 14px; font-weight: 900; }
         .note-time-display { font-family: 'Orbitron'; font-size: 20px; color: #D4AF37; font-weight: 900; margin-left: 12px; }
 
-        /* 紀錄頁面中的航段小標籤 */
         .record-sec-tag { font-size: 10px; color: #fbbf24; opacity: 0.8; margin-left: 4px; font-family: 'Orbitron'; }
         
         .ss-description-box {
             background: rgba(139, 26, 26, 0.08);
             border: 1px solid rgba(139, 26, 26, 0.3);
             border-left: 6px solid #8B1A1A;
-            padding: 1.2rem;
-            border-radius: 0 1.2rem 1.2rem 0;
-            margin-top: 1rem;
-            margin-bottom: 1.5rem;
+            padding: 1.2rem; border-radius: 0 1.2rem 1.2rem 0; margin-top: 1rem; margin-bottom: 1.5rem;
         }
 
         .route-label { font-size: 0.75rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; margin-right: 8px; }
@@ -135,12 +128,19 @@
 
         if (!uID || !uName) window.location.href = '../index.html';
 
+        /**
+         * 核心修復：精準解析 Excel 日期與字串
+         */
         function parseDay(d) {
-            if (!isNaN(d) && parseFloat(d) > 40000) {
-                const dateObj = new Date((parseFloat(d) - 25569) * 86400000);
+            if (!d) return "";
+            const val = String(d).trim();
+            // 如果是 Excel 數字格式 (如 46139)
+            if (!isNaN(val) && parseFloat(val) > 40000) {
+                const dateObj = new Date((parseFloat(val) - 25569) * 86400000);
                 return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
             }
-            return String(d).trim();
+            // 如果已經是 4/27 格式
+            return val;
         }
 
         async function init() {
@@ -163,8 +163,8 @@
             const now = new Date();
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
             const timestamp = now.toISOString();
-            const stageInfo = itineraryData.find(i => i.Day === day && i.Section === section);
-            const locationName = (type === 'START') ? stageInfo.Start_Point : stageInfo.End_Point;
+            const stageInfo = itineraryData.find(i => parseDay(i.Day) === day && i.Section === section);
+            const locationName = (type === 'START') ? (stageInfo?.Start_Point || "") : (stageInfo?.End_Point || "");
 
             try {
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`, {
@@ -176,11 +176,10 @@
                 });
                 if(res.ok) {
                     alert(`✅ ${section} 打卡成功！`);
-                    // 更新本地數據
                     userCheckIns.push({ CustomerID: uID, Day: day, Section: section, Type: type, Timestamp: timestamp, CheckIn_Time: timeStr });
                     changeDay(day);
                 }
-            } catch(e) { alert("打卡失敗，請檢查網路"); }
+            } catch(e) { alert("打卡失敗"); }
         }
 
         function switchTab(view) {
@@ -196,7 +195,7 @@
             const targetTab = document.getElementById(`tab-${day}`);
             if(targetTab) targetTab.classList.add('active');
             
-            const dayData = itineraryData.filter(i => i.Day === day);
+            const dayData = itineraryData.filter(i => parseDay(i.Day) === day);
             const dLine = dayData.find(i => i.Section === "DayLine");
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
@@ -209,63 +208,40 @@
             }
 
             const mainContent = dayData.filter(i => i.Section !== "DayLine");
-            let ssCounter = 0;
+            let ssIdx = 0;
             document.getElementById('stageContainer').innerHTML = mainContent.map((item) => {
                 if (item.Section === "Note") {
-                    return `
-                        <div class="note-container">
-                            <div class="flex items-center mb-4">
-                                <span class="note-badge tech-font">Pilot Briefing</span>
-                                <span class="note-time-display">${item.T || ''}</span>
-                            </div>
-                            <div class="text-base font-black text-white italic border-t border-white/5 pt-3">${item.Description || ''}</div>
-                        </div>`;
+                    return `<div class="note-container"><div class="flex items-center mb-4"><span class="note-badge tech-font">Pilot Briefing</span><span class="note-time-display">${item.T || ''}</span></div><div class="text-base font-black text-white italic pt-3">${item.Description || ''}</div></div>`;
                 } else if (item.Section.startsWith("SS")) {
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
-                    
-                    return `
-                        <div class="stage-card shadow-xl">
-                            <div class="p-8">
-                                <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
-                                    <h3 class="ss-header tech-font">${item.Section}</h3>
-                                    <div class="text-left">
-                                        <div class="text-xl font-black tech-font">里程：${item.D}</div>
-                                        <div class="text-sm font-black tech-font text-[#D4AF37]">預計：${item.Est_Time || '--'}</div>
-                                    </div>
-                                </div>
-                                <div class="space-y-10 mb-8 relative">
-                                    <div class="line-connector"></div>
-                                    <div class="flex items-center gap-6 relative">
-                                        <div class="loc-badge">A${ssCounter}</div>
-                                        <div><p class="text-gray-500 text-[9px] font-black uppercase">Start</p><p class="text-xl font-black text-white leading-tight">${item.Start_Point}</p></div>
-                                    </div>
-                                    <div class="flex items-center gap-6 relative">
-                                        <div class="loc-badge" style="border-color:#8B1A1A">A${ssCounter+1}</div>
-                                        <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
-                                    </div>
-                                </div>
-                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p><p class="text-xs font-black text-gray-300">${item.Description}</p></div>` : ''}
-                                <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
-                                <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'}">${hasStart ? "已打卡" : "START 打卡"}</button>
-                                    <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
-                                </div>
+                    const html = `
+                        <div class="stage-card shadow-xl"><div class="p-8">
+                            <div class="flex flex-row-reverse justify-between items-start mb-8 text-white"><h3 class="ss-header tech-font">${item.Section}</h3><div class="text-left"><div class="text-xl font-black tech-font">里程：${item.D} Km</div><div class="text-sm font-black tech-font text-[#D4AF37]">預計：${item.Est_Time || '--'}</div></div></div>
+                            <div class="space-y-10 mb-8 relative"><div class="line-connector"></div>
+                                <div class="flex items-center gap-6 relative"><div class="loc-badge">A${ssIdx}</div><div><p class="text-gray-500 text-[9px] font-black uppercase">Start</p><p class="text-xl font-black text-white leading-tight">${item.Start_Point}</p></div></div>
+                                <div class="flex items-center gap-6 relative"><div class="loc-badge" style="border-color:#8B1A1A">A${ssIdx+1}</div><div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div></div>
                             </div>
-                        </div>`;
-                    ssCounter++; return html;
+                            <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic">🧭 開啟導航</button>
+                            <div class="grid grid-cols-2 gap-4">
+                                <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'}">${hasStart ? "已打卡" : "START 打卡"}</button>
+                                <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
+                            </div>
+                        </div></div>`;
+                    ssIdx++; return html;
                 }
                 return '';
             }).join('');
         }
 
-        // --- 與 EXPORT 邏輯同步的關鍵函數 ---
+        /**
+         * 核心修復：里程累加邏輯
+         */
         async function loadPersonalData() {
             const splitArea = document.getElementById('splitList');
             splitArea.innerHTML = '<p class="p-10 text-center animate-pulse text-gray-500 uppercase text-[10px]">Processing Telemetry...</p>';
             
             try {
-                // 重新抓取最新打卡紀錄
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`);
                 const allChecks = await res.json();
                 const myRecords = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
@@ -274,34 +250,32 @@
                 let totalKM = 0;
                 let html = "";
                 
-                const targetDays = ["4/27", "4/28", "4/29", "4/30", "5/1"];
-                
-                targetDays.forEach(d => {
+                ["4/27", "4/28", "4/29", "4/30", "5/1"].forEach(d => {
                     const dayRecords = myRecords.filter(r => parseDay(r.Day) === d);
-                    const sections = [...new Set(dayRecords.map(r => r.Section.trim()))];
+                    const sections = [...new Set(dayRecords.map(r => r.Section.trim()))].filter(s => s.startsWith("SS"));
                     
                     let dayKM = 0;
                     let dayActualMin = 0;
-                    let sectionDetailsHtml = [];
+                    let detailHtml = [];
 
                     sections.forEach(sec => {
                         const start = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'START');
                         const end = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'END');
-                        const info = itineraryData.find(i => i.Day === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
+                        // 修正：在行程表中尋找對應賽段里程，必須使用 parseDay 處理日期匹配
+                        const info = itineraryData.find(i => parseDay(i.Day) === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
                         
-                        let actualTimeText = "Incomplete";
+                        let durationText = "Incomplete";
                         if (start && end) {
-                            const diffMin = Math.floor((new Date(end.Timestamp) - new Date(start.Timestamp)) / 60000);
-                            if(diffMin > 0) {
-                                dayActualMin += diffMin;
-                                actualTimeText = diffMin >= 60 ? `${Math.floor(diffMin/60)}h ${diffMin%60}m` : `${diffMin}m`;
-                                if(info) dayKM += (parseFloat(info.D) || 0);
+                            const diff = Math.floor((new Date(end.Timestamp) - new Date(start.Timestamp)) / 60000);
+                            if(diff > 0) {
+                                dayActualMin += diff;
+                                durationText = diff >= 60 ? `${Math.floor(diff/60)}h ${diff%60}m` : `${diff}m`;
+                                if(info && info.D) dayKM += parseFloat(info.D);
                             }
-                        } else if (start && !end) {
-                            actualTimeText = "Running...";
+                        } else if (start) {
+                            durationText = "Running...";
                         }
-                        
-                        sectionDetailsHtml.push(`${sec}<span class="record-sec-tag">(${actualTimeText})</span>`);
+                        detailHtml.push(`${sec}<span class="record-sec-tag">(${durationText})</span>`);
                     });
 
                     totalActualMin += dayActualMin;
@@ -309,11 +283,8 @@
                     
                     html += `
                         <div class="flex justify-between items-center p-6 bg-zinc-900 rounded-[1.5rem] border border-zinc-800 mb-1">
-                            <div class="flex-1">
-                                <p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
-                                <div class="text-[10px] font-bold text-gray-400 leading-relaxed">
-                                    ${sectionDetailsHtml.length > 0 ? sectionDetailsHtml.join(' | ') : '---'}
-                                </div>
+                            <div class="flex-1"><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
+                                <div class="text-[10px] font-bold text-gray-400 leading-relaxed">${detailHtml.length > 0 ? detailHtml.join(' | ') : '---'}</div>
                             </div>
                             <div class="text-right ml-4">
                                 <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
@@ -325,9 +296,7 @@
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
                 document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${totalActualMin%60}m`;
                 splitArea.innerHTML = html;
-            } catch (e) { 
-                splitArea.innerHTML = "<p class='text-center text-red-500 text-[10px] py-10'>衛星遙測同步失敗</p>"; 
-            }
+            } catch (e) { splitArea.innerHTML = "<p class='text-center text-red-500 text-[10px] py-10'>連線失敗</p>"; }
         }
 
         init();
