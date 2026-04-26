@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>數據導出中心 - 陽光小屋</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #f8f9fa; font-family: sans-serif; }
+        th { background-color: #8B1A1A; color: #D4AF37; }
+    </style>
+</head>
+<body class="p-8">
+    <div class="max-w-7xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-black text-gray-800">證書數據整合中心</h1>
+                <p class="text-gray-500">自動彙整駕駛員姓名、完賽里程與時間</p>
+            </div>
+            <button onclick="downloadCSV()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-bold shadow-lg hover:bg-green-700">
+                📥 下載 CSV 檔案 (Excel 可開)
+            </button>
+        </header>
+
+        <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr>
+                        <th class="p-4 border">ID</th>
+                        <th class="p-4 border">駕駛員姓名</th>
+                        <th class="p-4 border">完賽天數</th>
+                        <th class="p-4 border">完成賽段數</th>
+                        <th class="p-4 border">總里程 (KM)</th>
+                        <th class="p-4 border">預計總工時</th>
+                        <th class="p-4 border">最後打卡時間</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTable">
+                    <tr><td colspan="7" class="p-10 text-center animate-pulse">正在整合雲端數據...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://sheetdb.io/api/v1/poo9epu17583p';
+        let finalData = [];
+
+        async function exportData() {
+            try {
+                const [checkinRes, userRes, itineraryRes] = await Promise.all([
+                    fetch(`${API_BASE}?sheet=CheckIns`),
+                    fetch(`${API_BASE}?sheet=Users`),
+                    fetch(`${API_BASE}?sheet=Itinerary`)
+                ]);
+
+                const checkins = await checkinRes.json();
+                const users = await userRes.json();
+                const itinerary = await itineraryRes.json();
+
+                // 1. 建立用戶映射
+                const userMap = {};
+                users.forEach(u => userMap[u.ID || u.id] = u.NAME || u.Name);
+
+                // 2. 按隊員分組
+                const fleet = {};
+                checkins.forEach(reg => {
+                    const id = reg.CustomerID;
+                    if (!fleet[id]) fleet[id] = [];
+                    fleet[id].push(reg);
+                });
+
+                // 3. 整合數據
+                finalData = Object.keys(fleet).map(id => {
+                    const userRecords = fleet[id];
+                    const doneSections = [...new Set(userRecords.filter(r => r.Type === 'END').map(r => r.Section))];
+                    
+                    let totalDist = 0;
+                    let totalMin = 0;
+
+                    itinerary.forEach(item => {
+                        const sect = (item.Section || item.section || "").toLowerCase();
+                        if (doneSections.map(s => s.toLowerCase()).includes(sect)) {
+                            totalDist += parseFloat(item.D || item.d || 0);
+                            const timeStr = item.Est_Time || "";
+                            const hr = parseInt(timeStr.match(/(\d+)\s*hr/) ? timeStr.match(/(\d+)\s*hr/)[1] : 0);
+                            const min = parseInt(timeStr.match(/(\d+)\s*min/) ? timeStr.match(/(\d+)\s*min/)[1] : 0);
+                            totalMin += (hr * 60 + min);
+                        }
+                    });
+
+                    const dates = userRecords.map(r => new Date(r.Day)).sort((a,b) => a-b);
+                    const days = Math.ceil(Math.abs(dates[dates.length-1] - dates[0]) / (1000*60*60*24)) + 1;
+
+                    return {
+                        id,
+                        name: userMap[id] || "未知",
+                        days,
+                        sections: doneSections.length,
+                        dist: totalDist.toFixed(1),
+                        time: `${Math.floor(totalMin/60)}h ${totalMin%60}m`,
+                        lastCheck: userRecords[userRecords.length-1].CheckIn_Time
+                    };
+                });
+
+                renderTable();
+            } catch (e) {
+                document.getElementById('dataTable').innerHTML = "數據讀取失敗";
+            }
+        }
+
+        function renderTable() {
+            const html = finalData.map(d => `
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4 border font-mono">${d.id}</td>
+                    <td class="p-4 border font-bold">${d.name}</td>
+                    <td class="p-4 border">${d.days} 天</td>
+                    <td class="p-4 border">${d.sections} 段</td>
+                    <td class="p-4 border text-blue-600 font-bold">${d.dist}</td>
+                    <td class="p-4 border">${d.time}</td>
+                    <td class="p-4 border text-xs text-gray-400">${d.lastCheck}</td>
+                </tr>
+            `).join('');
+            document.getElementById('dataTable').innerHTML = html;
+        }
+
+        function downloadCSV() {
+            let csv = "\uFEFFID,姓名,完賽天數,完成賽段,總里程(KM),總時間,最後打卡時間\n";
+            finalData.forEach(d => {
+                csv += `${d.id},${d.name},${d.days},${d.sections},${d.dist},${d.time},${d.lastCheck}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.setAttribute("download", `SunnyHouse_Cert_Data_${new Date().toLocaleDateString()}.csv`);
+            link.click();
+        }
+
+        exportData();
+    </script>
+</body>
+</html>
