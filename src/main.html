@@ -3,20 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>陽光小屋 - 專業路書</title>
+    <title>陽光小屋 - 每日路書</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        body { background-color: #F8F4E3; background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); }
+        body { 
+            background-color: #F8F4E3; 
+            background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); 
+        }
         .tibet-card { border-top: 6px solid #D4AF37; border-bottom: 6px solid #8B1A1A; }
-        /* 背景虛線 */
-        .line-draw { position: absolute; left: 27px; top: 60px; bottom: 60px; border-left: 2px dashed #D1D5DB; z-index: 0; }
+        .line-draw { 
+            position: absolute; left: 27px; top: 60px; bottom: 60px; 
+            border-left: 2px dashed #D1D5DB; z-index: 0; 
+        }
     </style>
 </head>
 <body class="pb-28">
 
     <nav class="bg-[#8B1A1A] text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-2xl">
         <div>
-            <h1 class="text-xl font-bold tracking-widest">陽光小屋車隊</h1>
+            <h1 class="text-xl font-bold tracking-widest text-white">陽光小屋車隊</h1>
             <p id="userDisplay" class="text-[10px] text-[#D4AF37] font-bold uppercase tracking-widest"></p>
         </div>
         <button onclick="localStorage.clear(); window.location.href='../index.html'" 
@@ -34,7 +39,7 @@
             <span class="text-2xl">🗺️</span>
             <span class="text-[10px] font-bold">每日路書</span>
         </div>
-        <div onclick="alert('證書將於行程結束後開放')" class="flex flex-col items-center text-gray-300">
+        <div onclick="alert('完賽證書將於行程結束後生成')" class="flex flex-col items-center text-gray-300">
             <span class="text-2xl">📜</span>
             <span class="text-[10px] font-bold">榮譽證書</span>
         </div>
@@ -44,8 +49,12 @@
         import { doCheckIn } from './api.js';
 
         const user = JSON.parse(localStorage.getItem('user'));
-        if (!user) window.location.href = '../index.html';
-        document.getElementById('userDisplay').innerText = `駕駛員：${user.NAME} (${user.ID})`;
+        if (!user) {
+            window.location.href = '../index.html';
+        } else {
+            // 對應你的 Users 表欄位 NAME
+            document.getElementById('userDisplay').innerText = `隊員：${user.NAME || user.Name || 'ACE'}`;
+        }
 
         async function loadItinerary() {
             try {
@@ -53,41 +62,51 @@
                 const data = await response.json();
                 renderCards(data);
             } catch (e) {
-                document.getElementById('itineraryContainer').innerHTML = "<p class='text-center text-red-600 font-bold'>讀取失敗</p>";
+                document.getElementById('itineraryContainer').innerHTML = "<p class='text-center text-red-600'>讀取失敗</p>";
             }
         }
 
         function renderCards(items) {
             const container = document.getElementById('itineraryContainer');
-            container.innerHTML = items.map(ss => `
-                <div class="tibet-card bg-white rounded-2xl shadow-2xl p-6 relative">
+            container.innerHTML = items.map(ss => {
+                // 增加容錯機制，預防 SheetDB 把標題轉成小寫
+                const title = ss.Title || ss.title || "未知賽段";
+                const startPoint = ss.Start_Point || ss.start_point || "起點";
+                const endPoint = ss.End_Point || ss.end_point || "終點";
+                const distance = ss.Distance || ss.distance || "--";
+                const estTime = ss.Est_Time || ss.est_time || "--";
+                const description = ss.Description || ss.description || "";
+                const amapLink = ss.Amap_Link || ss.amap_link || "#";
+
+                return `
+                <div class="tibet-card bg-white rounded-2xl shadow-xl p-6 relative">
                     <div class="line-draw"></div>
                     
                     <div class="flex justify-between items-center mb-6 relative z-10">
                         <span class="bg-[#8B1A1A] text-white text-[10px] px-3 py-1 rounded-full font-bold">賽段模式</span>
-                        <span class="text-gray-400 text-xs font-mono font-bold">${ss.Day}</span>
+                        <span class="text-gray-400 text-xs font-mono font-bold">${ss.Day || ''}</span>
                     </div>
 
                     <div class="flex items-start gap-4 mb-8 relative z-10">
                         <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A0</div>
                         <div class="flex-1">
                             <p class="text-[10px] font-bold text-gray-400 uppercase">Start Point</p>
-                            <h3 class="text-lg font-bold text-gray-800 leading-tight">${ss.Start_Point}</h3>
+                            <h3 class="text-lg font-bold text-gray-800 leading-tight">${startPoint}</h3>
                         </div>
                     </div>
 
                     <div class="flex items-start gap-4 mb-8 relative z-10">
-                        <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${ss.Section}</div>
-                        <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <h4 class="font-black text-[#8B1A1A] text-md">${ss.Title}</h4>
+                        <div class="w-8 h-8 bg-[#8B1A1A] text-[#D4AF37] rounded-full flex-none flex items-center justify-center font-black text-xs shadow-lg border-2 border-[#D4AF37]">${ss.Section || 'SS'}</div>
+                        <div class="flex-1 bg-gray-50 p-4 rounded-xl border border-gray-100 shadow-inner">
+                            <h4 class="font-black text-[#8B1A1A] text-md">${title}</h4>
                             <div class="flex gap-4 mt-2 text-[11px] text-gray-500 font-bold">
-                                <span>里程: ${ss.Distance}</span>
-                                <span>預計: ${ss.Est_Time}</span>
+                                <span>里程: ${distance}</span>
+                                <span>預計: ${estTime}</span>
                             </div>
-                            <p class="text-[11px] text-gray-400 mt-2 italic">${ss.Description}</p>
+                            <p class="text-[11px] text-gray-400 mt-2 italic">${description}</p>
                             
-                            <button onclick="window.location.href='${ss.Amap_Link}&callnative=1'" 
-                                    class="w-full mt-4 bg-[#3385ff] text-white py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
+                            <button onclick="window.location.href='${amapLink}&callnative=1'" 
+                                    class="w-full mt-4 bg-[#3385ff] text-white py-4 rounded-xl font-bold text-xs flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-all">
                                 <img src="https://img.icons8.com/color/48/amap.png" class="h-4 w-4">
                                 啟動 SS 專屬路線導航
                             </button>
@@ -98,22 +117,22 @@
                         <div class="w-8 h-8 bg-black text-white rounded flex-none flex items-center justify-center font-black text-xs shadow-lg">A1</div>
                         <div class="flex-1">
                             <p class="text-[10px] font-bold text-gray-400 uppercase">End Point</p>
-                            <h3 class="text-lg font-bold text-gray-800 leading-tight">${ss.End_Point}</h3>
+                            <h3 class="text-lg font-bold text-gray-800 leading-tight">${endPoint}</h3>
                         </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4 mt-6 pt-6 border-t border-gray-100 relative z-10">
-                        <button onclick="handleCheckIn('${ss.Section}', 'START', '${ss.Start_Point}')" 
-                                class="bg-[#8B1A1A] text-white py-4 rounded-xl font-bold text-xs shadow-xl active:bg-black">
+                        <button onclick="handleCheckIn('${ss.Section}', 'START', '${startPoint}')" 
+                                class="bg-[#8B1A1A] text-white py-4 rounded-xl font-bold text-xs shadow-xl active:bg-black transition-colors">
                             A0 起點打卡
                         </button>
-                        <button onclick="handleCheckIn('${ss.Section}', 'END', '${ss.End_Point}')" 
-                                class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-4 rounded-xl font-bold text-xs active:bg-gray-100">
+                        <button onclick="handleCheckIn('${ss.Section}', 'END', '${endPoint}')" 
+                                class="border-2 border-[#8B1A1A] text-[#8B1A1A] py-4 rounded-xl font-bold text-xs active:bg-gray-100 transition-colors">
                             A1 終點打卡
                         </button>
                     </div>
                 </div>
-            `).join('');
+            `; }).join('');
         }
 
         window.handleCheckIn = async function(section, type, locName) {
@@ -123,12 +142,11 @@
             btn.disabled = true;
 
             const success = await doCheckIn(section, type, locName);
-            
             if (success) {
-                btn.innerText = "✓ 打卡成功";
+                btn.innerText = "✓ 已打卡";
                 btn.classList.add('opacity-50');
-                btn.onclick = null;
-                alert(`【${section}】打卡成功！`);
+                btn.disabled = true;
+                alert("打卡成功！扎西德勒！");
             } else {
                 btn.innerText = originalText;
                 btn.disabled = false;
