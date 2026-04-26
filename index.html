@@ -3,16 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>陽光小屋車隊 - 系統啟動</title>
+    <title>SunnyHouse Tours - 系統啟動</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; margin: 0; overflow: hidden; }
+        .tech-font { font-family: 'Orbitron', sans-serif; }
         .login-card { background: #1a1a1a; border: 2px solid #8B1A1A; border-radius: 2.5rem; box-shadow: 0 0 40px rgba(139, 26, 26, 0.4); }
         .input-box { background: #262626; border: 2px solid #404040; color: white; text-align: center; font-size: 1.5rem; letter-spacing: 0.1em; transition: 0.3s; }
         .input-box:focus { border-color: #D4AF37; outline: none; background: #333; }
         .btn-glow { background: #8B1A1A; transition: 0.3s; box-shadow: 0 5px 20px rgba(139, 26, 26, 0.5); }
         .btn-glow:active { transform: scale(0.95); }
+
+        /* Logo 文字樣式優化 */
+        .logo-text { 
+            color: white; 
+            font-family: 'Orbitron', sans-serif; 
+            font-weight: 700; 
+            font-size: 14px; 
+            line-height: 1.2; 
+            text-align: center;
+            text-transform: uppercase;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center h-screen bg-black">
@@ -20,8 +32,9 @@
     <div class="w-full max-w-sm px-8">
         <div class="login-card p-10 text-center">
             <div class="mb-8 flex justify-center">
-                <div class="w-24 h-24 bg-[#8B1A1A] rounded-full border-4 border-[#D4AF37] flex items-center justify-center shadow-lg">
-                    <span class="text-white font-black text-2xl tracking-tighter">陽光</span>
+                <div class="w-24 h-24 bg-[#8B1A1A] rounded-full border-4 border-[#D4AF37] flex flex-col items-center justify-center shadow-lg px-2">
+                    <span class="logo-text">SunnyHouse</span>
+                    <span class="logo-text" style="font-size: 11px; color: #D4AF37;">Tours</span>
                 </div>
             </div>
 
@@ -32,7 +45,7 @@
                 <div class="text-left">
                     <label class="text-gray-400 text-xs font-black mb-3 block text-center uppercase tracking-widest">請輸入您的出生年月日 (YYYYMMDD)</label>
                     <input type="number" id="birthday" placeholder="例如：19990427" 
-                        class="input-box w-full p-5 rounded-2xl font-black placeholder:text-gray-600">
+                        class="input-box w-full p-5 rounded-2xl font-black placeholder:text-gray-700">
                 </div>
 
                 <button onclick="handleLogin()" id="loginBtn" class="btn-glow w-full py-5 text-white font-black rounded-2xl text-xl tracking-widest">
@@ -63,14 +76,11 @@
                 const response = await fetch(API_URL);
                 const users = await response.json();
 
-                // 比對 Excel 中的 Birthday 欄位
                 const user = users.find(u => String(u.Birthday) === passInput);
 
                 if (user) {
                     localStorage.setItem('driverID', user.ID);
-                    localStorage.setItem('driverName', user.N); // 對應 Excel 的 N 欄位
-                    
-                    // 指向 src 資料夾下的 main.html
+                    localStorage.setItem('driverName', user.N);
                     window.location.href = './src/main.html';
                 } else {
                     alert("查無此隊員資料，請檢查生日是否正確");
