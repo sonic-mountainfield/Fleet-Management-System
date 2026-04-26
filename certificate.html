@@ -3,96 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>陽光小屋 - 榮譽證書生成器</title>
+    <title>陽光小屋 - 完賽榮譽證書</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&family=Zhi+Mang+Xing&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@900&display=swap');
-        .cert-border { border: 20px solid #8B1A1A; outline: 5px solid #D4AF37; outline-offset: -15px; }
+        .cert-border { border: 25px solid #8B1A1A; outline: 6px solid #D4AF37; outline-offset: -18px; position: relative; }
         .cert-bg { background-color: #fffaf0; background-image: url('https://www.transparenttextures.com/patterns/paper-fibers.png'); }
         .tibet-font { font-family: 'Noto Serif TC', serif; }
+        .hand-font { font-family: 'Zhi Mang Xing', cursive; }
+        .stat-box { background: rgba(139, 26, 26, 0.05); border-radius: 12px; border: 1px solid rgba(212, 175, 55, 0.3); }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
-<body class="bg-gray-200 p-4">
+<body class="bg-gray-100 p-4">
 
-    <div class="max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-lg mb-8 no-print">
-        <h2 class="font-bold mb-4 text-gray-700">第一步：輸入隊員 ID 檢索紀錄</h2>
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded-2xl shadow-lg mb-8 no-print border-2 border-[#D4AF37]">
+        <h2 class="font-bold mb-4 text-[#8B1A1A] flex items-center gap-2">
+            <span>🏁</span> 生成駕駛員完賽證書
+        </h2>
         <div class="flex gap-4">
-            <input type="text" id="searchID" placeholder="例如：U001" class="flex-1 border p-3 rounded-lg outline-none focus:ring-2 focus:ring-[#8B1A1A]">
-            <button onclick="generateCert()" class="bg-[#8B1A1A] text-white px-6 py-3 rounded-lg font-bold">生成證書</button>
+            <input type="text" id="searchID" placeholder="請輸入駕駛員 ID (如: U100)" class="flex-1 border-2 border-gray-200 p-3 rounded-xl outline-none focus:border-[#8B1A1A] transition-all font-bold">
+            <button onclick="generateFinalCert()" class="bg-[#8B1A1A] text-[#D4AF37] px-8 py-3 rounded-xl font-black shadow-lg hover:bg-black transition-all">生成</button>
         </div>
     </div>
 
-    <div id="certificateCapture" class="max-w-3xl mx-auto cert-bg cert-border p-16 relative shadow-2xl hidden">
-        <div class="text-center">
-            <img src="https://img.icons8.com/color/96/mountain.png" class="mx-auto mb-4 opacity-80">
-            <h1 class="text-5xl tibet-font text-[#8B1A1A] mb-2">榮譽證書</h1>
-            <p class="text-[#D4AF37] tracking-[0.5em] font-bold mb-12 uppercase">Certificate of Honor</p>
+    <div id="certificateView" class="max-w-4xl mx-auto cert-bg cert-border p-12 md:p-16 shadow-2xl hidden relative overflow-hidden">
+        
+        <div class="absolute right-[-50px] bottom-10 opacity-10 pointer-events-none">
+             <img src="https://img.icons8.com/color/512/mountain.png" class="w-96">
+        </div>
+
+        <div class="text-center relative z-10">
+            <h1 class="text-6xl tibet-font text-[#8B1A1A] mb-2 tracking-widest">完賽榮譽證書</h1>
+            <p class="text-[#D4AF37] tracking-[0.6em] font-black mb-10 uppercase text-sm">Certificate of Achievement</p>
             
-            <div class="text-left space-y-8 text-gray-800 leading-loose">
-                <p class="text-xl">
-                    尊敬的 <span id="certName" class="text-3xl font-black border-b-2 border-gray-400 px-4 text-black">--</span> 隊員：
+            <div class="text-left space-y-6 text-gray-800 mb-10">
+                <p class="text-2xl">
+                    尊敬的 <span id="certName" class="text-4xl font-black border-b-4 border-[#D4AF37] px-4 text-black hand-font">---</span> 駕駛員：
                 </p>
-                <p class="text-lg indent-8">
-                    感謝您參與「陽光小屋車隊」西藏自駕壯遊。在本次行程中，您憑藉著無畏的勇氣與卓越的駕駛技術，成功穿越高原險阻，並完成所有指定的
-                    <span id="certSSCount" class="font-bold text-[#8B1A1A]">--</span> 個打卡賽段。
-                </p>
-                <p class="text-lg indent-8">
-                    特發此證，以資鼓勵您在海拔四千公尺以上的巔峰表現。扎西德勒！
+                <p class="text-lg leading-loose indent-10">
+                    在 <span id="certTotalDays" class="font-bold text-[#8B1A1A]">--</span> 天的極限挑戰中，您展現了卓越的意志與精湛的駕駛技術。成功駕駛愛車穿越西藏高原，克服高海拔與地理險阻，圓滿完成本次巡航任務。特頒此證，銘記您的冒險精神。
                 </p>
             </div>
 
-            <div class="mt-20 flex justify-between items-end">
-                <div class="text-left">
-                    <p class="text-sm text-gray-500 font-mono">證書編號：SHF-<span id="certNo">--</span></p>
-                    <p class="text-sm text-gray-500 font-mono">日期：<span id="certDate">--</span></p>
+            <div class="grid grid-cols-3 gap-4 mb-10">
+                <div class="stat-box p-4">
+                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">總里程</p>
+                    <h3 class="text-2xl font-black text-[#8B1A1A]"><span id="certDist">--</span> <small class="text-xs">KM</small></h3>
+                </div>
+                <div class="stat-box p-4">
+                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">賽段數</p>
+                    <h3 class="text-2xl font-black text-[#8B1A1A]"><span id="certSS">--</span> <small class="text-xs">Stages</small></h3>
+                </div>
+                <div class="stat-box p-4">
+                    <p class="text-[10px] text-[#D4AF37] font-bold uppercase mb-1">總時數</p>
+                    <h3 class="text-2xl font-black text-[#8B1A1A]"><span id="certTime">--</span></h3>
+                </div>
+            </div>
+
+            <div class="relative w-full h-48 mb-12 bg-white/40 rounded-3xl border-2 border-dashed border-[#D4AF37]/50 flex items-center justify-center">
+                <svg viewBox="0 0 800 200" class="w-full h-full p-4">
+                    <path d="M50,150 C150,50 300,50 400,100 S650,150 750,50" fill="none" stroke="#D4AF37" stroke-width="4" stroke-dasharray="10,10" />
+                    <circle cx="50" cy="150" r="6" fill="#8B1A1A" /><text x="30" y="180" class="text-[14px] font-bold fill-gray-600">拉薩</text>
+                    <text x="380" y="80" class="text-[20px]">🏔️</text><text x="385" y="130" class="text-[14px] font-bold fill-[#8B1A1A]">珠峰大本營</text>
+                    <text x="730" y="35" class="text-[20px]">🏁</text><text x="730" y="80" class="text-[14px] font-bold fill-gray-600">凱旋</text>
+                    <text x="180" y="80" class="text-[18px]">🚗</text>
+                </svg>
+            </div>
+
+            <div class="flex justify-between items-end">
+                <div class="text-left text-xs font-bold text-gray-400 space-y-1">
+                    <p>日期：<span id="certDate">---</span></p>
+                    <p>編號：SHF-<span id="certNo">---</span></p>
                 </div>
                 <div class="text-center">
-                    <div class="w-32 h-32 border-4 border-[#8B1A1A]/20 rounded-full flex items-center justify-center mb-2 mx-auto">
-                        <p class="text-[#8B1A1A] font-bold text-xs rotate-[-15deg]">陽光小屋<br>車隊指揮部</p>
+                    <div class="w-28 h-28 border-4 border-[#8B1A1A] rounded-full flex items-center justify-center mb-2 mx-auto relative rotate-[-10deg]">
+                        <p class="text-[#8B1A1A] font-black text-[10px] leading-tight">陽光小屋<br>西藏自駕<br>認證章</p>
                     </div>
-                    <p class="font-bold text-xl tibet-font text-[#8B1A1A]">總管家 敬上</p>
+                    <p class="font-black text-xl tibet-font text-[#8B1A1A]">總管家 敬上</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="text-center mt-8 no-print">
-        <button onclick="window.print()" class="bg-gray-800 text-white px-8 py-3 rounded-full font-bold">列印 / 存為 PDF</button>
+    <div class="text-center mt-10 no-print">
+        <button onclick="window.print()" class="bg-[#8B1A1A] text-white px-10 py-4 rounded-full font-bold shadow-2xl hover:scale-105 transition-all">列印或儲存為 PDF</button>
     </div>
 
     <script>
-        async function generateCert() {
-            const id = document.getElementById('searchID').value.trim();
+        async function generateFinalCert() {
+            const id = document.getElementById('searchID').value.toUpperCase().trim();
             if(!id) return alert("請輸入 ID");
 
             try {
-                // 1. 抓取打卡紀錄
-                const res = await fetch(`https://sheetdb.io/api/v1/poo9epu17583p/search?CustomerID=${id}&sheet=CheckIns`);
-                const records = await res.json();
+                // 1. 同時獲取用戶資訊、打卡紀錄、行程表
+                const [checkinRes, userRes, itineraryRes] = await Promise.all([
+                    fetch(`https://sheetdb.io/api/v1/poo9epu17583p/search?CustomerID=${id}&sheet=CheckIns`),
+                    fetch(`https://sheetdb.io/api/v1/poo9epu17583p?sheet=Users`),
+                    fetch(`https://sheetdb.io/api/v1/poo9epu17583p?sheet=Itinerary`)
+                ]);
 
-                if(records.length === 0) return alert("查無此 ID 的完賽紀錄");
+                const records = await checkinRes.json();
+                const users = await userRes.json();
+                const itinerary = await itineraryRes.json();
 
-                // 2. 獲取用戶姓名 (從第一筆紀錄抓取)
-                const userName = records[0].NAME || records[0].CustomerName || id;
+                if(records.length === 0) return alert("查無打卡紀錄，無法生成證書");
 
-                // 3. 計算完成賽段數 (計算 Type 為 END 的數量)
-                const completedStages = [...new Set(records.filter(r => r.Type === 'END').map(r => r.Section))];
+                // 2. 數據交叉計算
+                const currentUser = users.find(u => (u.ID || u.id) === id);
+                const userName = currentUser ? (currentUser.NAME || currentUser.Name) : id;
+                
+                // 計算完成的賽段與加總里程
+                const doneSections = [...new Set(records.filter(r => r.Type === 'END').map(r => r.Section))];
+                let totalDist = 0;
+                let totalMin = 0;
 
-                // 4. 填充資料到證書
+                itinerary.forEach(item => {
+                    const sect = (item.Section || item.section || "").toLowerCase();
+                    if(doneSections.map(s => s.toLowerCase()).includes(sect)) {
+                        // 清理里程數字 (如 "270 KM" -> 270)
+                        const d = parseFloat(item.D || item.d || 0);
+                        totalDist += d;
+                        
+                        // 計算預計時間 (假設格式為 "2 hr 20 min" 或 "2 hr")
+                        const timeStr = item.Est_Time || "";
+                        const hr = parseInt(timeStr.match(/(\d+)\s*hr/) ? timeStr.match(/(\d+)\s*hr/)[1] : 0);
+                        const min = parseInt(timeStr.match(/(\d+)\s*min/) ? timeStr.match(/(\d+)\s*min/)[1] : 0);
+                        totalMin += (hr * 60 + min);
+                    }
+                });
+
+                // 計算天數 (抓取 CheckIns 中最早與最晚日期)
+                const dates = records.map(r => new Date(r.Day)).sort((a,b) => a-b);
+                const diffTime = Math.abs(dates[dates.length - 1] - dates[0]);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+                // 3. 渲染
                 document.getElementById('certName').innerText = userName;
-                document.getElementById('certSSCount').innerText = completedStages.length;
-                document.getElementById('certNo').innerText = Math.floor(Math.random()*9000) + 1000;
+                document.getElementById('certTotalDays').innerText = diffDays;
+                document.getElementById('certDist').innerText = totalDist;
+                document.getElementById('certSS').innerText = doneSections.length;
+                document.getElementById('certTime').innerText = `${Math.floor(totalMin/60)}h ${totalMin%60}m`;
                 document.getElementById('certDate').innerText = new Date().toLocaleDateString();
+                document.getElementById('certNo').innerText = Math.floor(1000 + Math.random() * 9000);
 
-                // 5. 顯示證書
-                document.getElementById('certificateCapture').classList.remove('hidden');
+                document.getElementById('certificateView').classList.remove('hidden');
+                
             } catch (e) {
-                alert("生成失敗，請確認網路或 API 狀態");
+                console.error(e);
+                alert("數據同步失敗");
             }
         }
     </script>
-    <style>
-        @media print { .no-print { display: none; } }
-    </style>
 </body>
 </html>
