@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
+        /* 背景色還原為深黑色 */
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         .nav-header { position: sticky; top: 0; z-index: 100; background: rgba(139, 26, 26, 0.95); backdrop-filter: blur(10px); border-bottom: 2px solid #D4AF37; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
@@ -20,11 +21,8 @@
         .ss-description-box { background: rgba(139, 26, 26, 0.08); border: 1px solid rgba(139, 26, 26, 0.3); border-left: 6px solid #8B1A1A; padding: 1.2rem; border-radius: 0 1.2rem 1.2rem 0; margin-top: 1rem; margin-bottom: 1.5rem; }
         .record-sec-tag { font-size: 10px; color: #fbbf24; opacity: 0.8; margin-left: 4px; font-family: 'Orbitron'; }
         .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
-        .btn-done { background: #059669 !important; color: white !important; pointer-events: none; }
-        
-        /* 鎖定按鈕樣式 */
+        .btn-done { background: #059669 !important; color: white !important; pointer-events: none; opacity: 1 !important; }
         .btn-locked { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
-        
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
@@ -119,7 +117,6 @@
                 const allChecks = await checkRes.json();
                 userCheckIns = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
                 
-                // 初始化顯示當天，若當天不在清單中則顯示 4/27
                 const now = new Date();
                 const todayFormatted = `${now.getMonth() + 1}/${now.getDate()}`;
                 const validDays = ["4/27", "4/28", "4/29", "4/30", "5/1"];
@@ -128,19 +125,27 @@
             } catch (e) { alert("連線失敗"); }
         }
 
-        async function postCheckIn(type, section) {
-            const dayStr = document.querySelector('.date-tab.active').innerText; // 如 "4/28"
+        // --- 核心修復：加上 event 參數並實作點擊鎖定 ---
+        async function postCheckIn(type, section, event) {
+            const btn = event.currentTarget; // 捕捉點擊的按鈕
+            if (btn.disabled) return; // 如果已經在傳輸中，則不執行
+
+            const dayStr = document.querySelector('.date-tab.active').innerText;
             const now = new Date();
             
-            // --- 未來日期檢測邏輯 ---
+            // 未來日期檢測
             const selectedDate = new Date(`2026/${dayStr}`);
-            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate()); // 只取年月日比對
-            
+            const todayDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
             if (selectedDate > todayDate) {
-                alert(`🚫 任務尚未開始\n您目前選取的是未來的日期 (${dayStr})，系統無法接受提前打卡。`);
+                alert(`🚫 任務尚未開始\n您目前選取的是未來的日期 (${dayStr})。`);
                 return;
             }
-            // -----------------------
+
+            // 1. 立即鎖定按鈕，防止二次點擊
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "傳輸中...";
+            btn.style.opacity = "0.5";
 
             const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
             const timestamp = now.toISOString();
@@ -155,12 +160,21 @@
                         data: [{ CustomerID: uID, Day: dayStr, Section: section, CheckIn_Time: timeStr, Type: type, Timestamp: timestamp, LocationName: locationName }]
                     })
                 });
+
                 if(res.ok) {
                     alert(`✅ ${section} 打卡成功！`);
                     userCheckIns.push({ CustomerID: uID, Day: dayStr, Section: section, Type: type, Timestamp: timestamp });
                     changeDay(dayStr);
+                } else {
+                    throw new Error("Submit failed");
                 }
-            } catch(e) { alert("打卡失敗"); }
+            } catch(e) { 
+                alert("打卡失敗，請檢查網路後重新嘗試"); 
+                // 只有失敗時才解除鎖定
+                btn.disabled = false;
+                btn.innerText = originalText;
+                btn.style.opacity = "1";
+            }
         }
 
         function switchTab(view) {
@@ -206,8 +220,6 @@
                 } else if (item.Section.startsWith("SS")) {
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
-                    
-                    // 未來日期按鈕變灰色
                     const lockClass = isFuture ? "btn-locked" : "";
 
                     return `
@@ -231,13 +243,11 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
-
                                 ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic tracking-[0.2em]">Pilot Notes / 領航備註</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
-
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="postCheckIn('START', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'} ${lockClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
-                                    <button onclick="postCheckIn('END', '${item.Section}')" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'} ${lockClass}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
+                                    <button onclick="postCheckIn('START', '${item.Section}', event)" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'} ${lockClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
+                                    <button onclick="postCheckIn('END', '${item.Section}', event)" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'} ${lockClass}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
                                 </div>
                             </div>
                         </div>`;
