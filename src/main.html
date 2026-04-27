@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@900&display=swap" rel="stylesheet">
     <style>
-        /* 背景色還原為深黑色 */
         body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         .nav-header { position: sticky; top: 0; z-index: 100; background: rgba(139, 26, 26, 0.95); backdrop-filter: blur(10px); border-bottom: 2px solid #D4AF37; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8); }
@@ -22,7 +21,10 @@
         .record-sec-tag { font-size: 10px; color: #fbbf24; opacity: 0.8; margin-left: 4px; font-family: 'Orbitron'; }
         .btn-full-day { background: #2563eb; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 900; font-size: 0.9rem; }
         .btn-done { background: #059669 !important; color: white !important; pointer-events: none; opacity: 1 !important; }
-        .btn-locked { opacity: 0.2; pointer-events: none; filter: grayscale(1); }
+        
+        /* 鎖定按鈕樣式：更暗且不接受點擊 */
+        .btn-locked { opacity: 0.1; pointer-events: none; filter: grayscale(1); }
+        
         .loc-badge { background: #000; color: #D4AF37; border: 1px solid #D4AF37; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-family: 'Orbitron'; font-weight: 900; font-size: 0.9rem; }
         .line-connector { position: absolute; left: 17px; top: 40px; bottom: 40px; width: 2px; background: #334155; }
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
@@ -40,7 +42,7 @@
                 </div>
                 <h1 class="tech-font text-[10px] tracking-tighter text-white italic">FLEET TERMINAL</h1>
             </div>
-            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full active:bg-[#D4AF37] active:text-black">🏆 觀看紀錄</button>
+            <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full">🏆 觀看紀錄</button>
         </div>
         <div id="dateScroll" class="flex overflow-x-auto px-4 py-1 gap-4 scrollbar-hide bg-black/20">
             <button onclick="changeDay('4/27')" class="date-tab active" id="tab-4/27">4/27</button>
@@ -70,7 +72,7 @@
 
         <div id="record-view" class="hidden">
             <button onclick="switchTab('nav')" class="text-[#D4AF37] font-bold text-[10px] mb-6">← BACK TO TERMINAL</button>
-            <section class="bg-zinc-900/80 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] mb-8 text-white text-center">
+            <section class="bg-zinc-900/80 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] mb-8 text-white text-center shadow-2xl">
                 <h2 id="recordNameDisplay" class="text-3xl font-black italic mb-6">---</h2>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
@@ -125,10 +127,9 @@
             } catch (e) { alert("連線失敗"); }
         }
 
-        // --- 核心修復：加上 event 參數並實作點擊鎖定 ---
         async function postCheckIn(type, section, event) {
-            const btn = event.currentTarget; // 捕捉點擊的按鈕
-            if (btn.disabled) return; // 如果已經在傳輸中，則不執行
+            const btn = event.currentTarget;
+            if (btn.disabled) return;
 
             const dayStr = document.querySelector('.date-tab.active').innerText;
             const now = new Date();
@@ -141,13 +142,12 @@
                 return;
             }
 
-            // 1. 立即鎖定按鈕，防止二次點擊
+            // 鎖定點擊
             btn.disabled = true;
             const originalText = btn.innerText;
             btn.innerText = "傳輸中...";
-            btn.style.opacity = "0.5";
 
-            const timeStr = now.getHours().toString().padStart(2,'0') + ":" + now.getMinutes().toString().padStart(2,'0');
+            const timeStr = String(now.getHours()).padStart(2,'0') + ":" + String(now.getMinutes()).padStart(2,'0');
             const timestamp = now.toISOString();
             const stageInfo = itineraryData.find(i => parseDay(i.Day) === dayStr && i.Section === section);
             const locationName = (type === 'START') ? stageInfo?.Start_Point : stageInfo?.End_Point;
@@ -162,18 +162,14 @@
                 });
 
                 if(res.ok) {
-                    alert(`✅ ${section} 打卡成功！`);
+                    alert(`✅ ${section} ${type} 成功！`);
                     userCheckIns.push({ CustomerID: uID, Day: dayStr, Section: section, Type: type, Timestamp: timestamp });
                     changeDay(dayStr);
-                } else {
-                    throw new Error("Submit failed");
-                }
+                } else { throw new Error(); }
             } catch(e) { 
-                alert("打卡失敗，請檢查網路後重新嘗試"); 
-                // 只有失敗時才解除鎖定
+                alert("打卡失敗，請重新嘗試"); 
                 btn.disabled = false;
                 btn.innerText = originalText;
-                btn.style.opacity = "1";
             }
         }
 
@@ -206,23 +202,33 @@
             }
 
             const mainContent = dayData.filter(i => i.Section !== "DayLine");
+            const ssList = mainContent.filter(item => item.Section.startsWith("SS"));
+            
             let ssCounter = 0;
             document.getElementById('stageContainer').innerHTML = mainContent.map((item) => {
                 if (item.Section === "Note") {
-                    return `
-                        <div class="note-container">
-                            <div class="flex items-center mb-4">
-                                <span class="note-badge tech-font">Pilot Briefing</span>
-                                <span class="note-time-display">${item.T || ''}</span>
-                            </div>
-                            <div class="text-base font-black text-white leading-relaxed border-t border-white/5 pt-3">${item.Description || ''}</div>
-                        </div>`;
+                    return `<div class="note-container"><div class="flex items-center mb-4"><span class="note-badge tech-font">Pilot Briefing</span><span class="note-time-display">${item.T || ''}</span></div><div class="text-base font-black text-white leading-relaxed border-t border-white/5 pt-3">${item.Description || ''}</div></div>`;
                 } else if (item.Section.startsWith("SS")) {
+                    const currentSSNum = parseInt(item.Section.replace("SS", ""));
+                    
+                    // 檢查當前 SS 的狀態
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
-                    const lockClass = isFuture ? "btn-locked" : "";
+                    
+                    // --- 核心順序邏輯 ---
+                    // 1. START 能否點擊：必須是當天，且「前一個 SS 已經完成 END」
+                    let canStart = !isFuture && !hasStart;
+                    if (currentSSNum > 1) {
+                        const prevSSName = "SS" + (currentSSNum - 1);
+                        const prevFinished = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === prevSSName && c.Type === 'END');
+                        if (!prevFinished) canStart = false;
+                    }
 
-                    return `
+                    // 2. FINISH 能否點擊：必須已經按過當前 SS 的 START
+                    let canFinish = hasStart && !hasEnd;
+                    // ------------------
+
+                    const html = `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
                                 <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
@@ -243,11 +249,17 @@
                                         <div><p class="text-[#8B1A1A] text-[9px] font-black uppercase">Finish Point</p><p class="text-xl font-black text-white leading-tight">${item.End_Point}</p></div>
                                     </div>
                                 </div>
-                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic tracking-[0.2em]">Pilot Notes / 領航備註</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
+                                ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
                                 <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
-                                    <button onclick="postCheckIn('START', '${item.Section}', event)" class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : 'bg-[#8B1A1A]'} ${lockClass}">${hasStart ? "已打卡" : "START 打卡"}</button>
-                                    <button onclick="postCheckIn('END', '${item.Section}', event)" class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : 'border border-[#333]'} ${lockClass}">${hasEnd ? "已完成" : "FINISH 打卡"}</button>
+                                    <button onclick="postCheckIn('START', '${item.Section}', event)" 
+                                            class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : (canStart ? 'bg-[#8B1A1A]' : 'btn-locked')}">
+                                        ${hasStart ? "已打卡" : "START 打卡"}
+                                    </button>
+                                    <button onclick="postCheckIn('END', '${item.Section}', event)" 
+                                            class="py-4 rounded-xl font-black text-white text-xs ${hasEnd ? 'btn-done' : (canFinish ? 'border border-[#333]' : 'btn-locked')}">
+                                        ${hasEnd ? "已完成" : "FINISH 打卡"}
+                                    </button>
                                 </div>
                             </div>
                         </div>`;
@@ -264,25 +276,17 @@
                 const res = await fetch(`${API_BASE}?sheet=CheckIns`);
                 const allChecks = await res.json();
                 const myRecords = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
+                let totalActualMin = 0, totalKM = 0, html = "";
                 
-                let totalActualMin = 0;
-                let totalKM = 0;
-                let html = "";
-                
-                const targetDays = ["4/27", "4/28", "4/29", "4/30", "5/1"];
-                targetDays.forEach(d => {
+                ["4/27", "4/28", "4/29", "4/30", "5/1"].forEach(d => {
                     const dayRecords = myRecords.filter(r => parseDay(r.Day) === d);
                     const sections = [...new Set(dayRecords.map(r => r.Section.trim()))];
-                    
-                    let dayKM = 0;
-                    let dayActualMin = 0;
-                    let sectionDetails = [];
+                    let dayKM = 0, dayActualMin = 0, sectionDetails = [];
 
                     sections.forEach(sec => {
                         const start = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'START');
                         const end = dayRecords.find(r => r.Section.trim() === sec && r.Type.trim().toUpperCase() === 'END');
                         const info = itineraryData.find(i => parseDay(i.Day) === d && i.Section.trim().toUpperCase() === sec.toUpperCase());
-                        
                         let actualTimeText = "Incomplete";
                         if (start && end) {
                             const diffMin = Math.floor((new Date(end.Timestamp) - new Date(start.Timestamp)) / 60000);
@@ -291,28 +295,12 @@
                                 actualTimeText = diffMin >= 60 ? `${Math.floor(diffMin/60)}h ${diffMin%60}m` : `${diffMin}m`;
                                 if(info) dayKM += (parseFloat(info.D) || 0);
                             }
-                        } else if (start) {
-                            actualTimeText = "Running...";
-                        }
-                        
-                        if(sec.startsWith("SS")) {
-                            sectionDetails.push(`${sec}<span class="record-sec-tag">(${actualTimeText})</span>`);
-                        }
+                        } else if (start) { actualTimeText = "Running..."; }
+                        if(sec.startsWith("SS")) sectionDetails.push(`${sec}<span class="record-sec-tag">(${actualTimeText})</span>`);
                     });
-
-                    totalActualMin += dayActualMin;
-                    totalKM += dayKM;
-                    
-                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1">
-                        <div><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p>
-                        <p class="font-black ${dayKM > 0 ? 'text-yellow-500' : 'text-zinc-800'} text-xs">${dayKM > 0 ? '✔️ DATA LOGGED' : '---'}</p></div>
-                        <div class="text-right">
-                            <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
-                            <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
-                        </div>
-                    </div>`;
+                    totalActualMin += dayActualMin; totalKM += dayKM;
+                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1"><div><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p><div class="text-[10px] font-bold text-gray-400 leading-relaxed">${sectionDetails.length > 0 ? sectionDetails.join(' | ') : '---'}</div></div><div class="text-right ml-4"><p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p><p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p></div></div>`;
                 });
-
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
                 document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${Math.round(totalActualMin%60)}m`;
                 splitArea.innerHTML = html;
