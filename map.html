@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNNY HOUSE - 2026 西藏拉力賽段總覽</title>
+    <!-- 引入 Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; background-color: #0f172a; font-family: 'Orbitron', sans-serif; }
+        #map { width: 100vw; height: 100vh; }
+        .leaflet-popup-content-wrapper { background: rgba(30, 41, 59, 0.9); color: #f1f5f9; border: 1px solid #fbbf24; border-radius: 8px; }
+        .leaflet-popup-tip { background: rgba(30, 41, 59, 0.9); }
+        .popup-title { color: #fbbf24; font-weight: bold; font-size: 14px; margin-bottom: 4px; }
+        .popup-desc { font-size: 12px; color: #94a3b8; }
+    </style>
+</head>
+<body>
+
+    <div id="map"></div>
+
+    <!-- 引入 Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // 1. 初始化地圖，中心點設定在西藏 (日喀則附近)，縮放等級為 7
+        const map = L.map('map').setView([28.9, 89.0], 7);
+
+        // 2. 使用深色科技風格的地圖底圖 (CartoDB Dark Matter)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+            subdomains: 'abcd',
+            maxZoom: 20
+        }).addTo(map);
+
+        // 3. 根據你的行程表提取的主要大點座標 (緯度, 經度) - 這裡為大約座標供展示
+        const routePoints = [
+            { name: "拉薩洲際酒店", coords: [29.652, 91.144], desc: "4/27 起點 | 5/1 終點" },
+            { name: "大竹卡", coords: [29.383, 89.666], desc: "4/27 途經" },
+            { name: "日喀則希爾頓酒店", coords: [29.266, 88.883], desc: "4/27 終點 | 4/28 起點" },
+            { name: "嘉措拉山口", coords: [28.600, 87.716], desc: "4/28 途經 (海拔5248m)" },
+            { name: "珠峰大本營 (歐冠恆氧酒店)", coords: [28.140, 86.820], desc: "4/28 終點 | 4/29 起點" },
+            { name: "定日 (珠穆朗瑪國際酒店)", coords: [28.650, 87.116], desc: "4/29 終點 | 4/30 起點" },
+            { name: "江孜 (娘曲藏布莊園酒店)", coords: [28.916, 89.600], desc: "4/30 終點 | 5/1 起點" },
+            { name: "羊卓雍措二號觀景台", coords: [28.966, 90.600], desc: "5/1 途經" },
+            { name: "拉薩洲際酒店", coords: [29.652, 91.144], desc: "5/1 完賽點" } // 繞回起點
+        ];
+
+        // 將座標提取出來畫線用
+        const latlngs = routePoints.map(p => p.coords);
+
+        // 4. 在地圖上繪製軌跡線 (使用賽博龐克風格的黃色虛線)
+        const polyline = L.polyline(latlngs, {
+            color: '#fbbf24', // Tailwind yellow-400
+            weight: 4,
+            opacity: 0.8,
+            dashArray: '10, 10', // 虛線效果
+            lineJoin: 'round'
+        }).addTo(map);
+
+        // 5. 在地圖上加入每個站點的標記 (Marker)
+        routePoints.forEach((point, index) => {
+            const isStartEnd = index === 0 || index === routePoints.length - 1;
+            const markerColor = isStartEnd ? '#ef4444' : '#3b82f6'; // 起終點為紅色，其他為藍色
+
+            // 建立圓形標記
+            const marker = L.circleMarker(point.coords, {
+                radius: 6,
+                fillColor: markerColor,
+                color: '#ffffff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            // 綁定點擊彈出視窗
+            marker.bindPopup(`
+                <div class="popup-title">${point.name}</div>
+                <div class="popup-desc">${point.desc}</div>
+            `);
+        });
+
+        // 6. 自動縮放地圖以完整顯示整條路線
+        map.fitBounds(polyline.getBounds(), { padding: [50, 50] });
+    </script>
+</body>
+</html>
