@@ -16,10 +16,10 @@
         .time-tag { font-size: 10px; color: #fbbf24; font-family: 'Orbitron'; margin-left: 4px; font-weight: 700; letter-spacing: 0.5px; }
         .data-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
 
-        /* --- 列印專用樣式區塊 --- */
+        /* --- 列印專用樣式區塊 (極致壓縮版) --- */
         @media print {
-            /* 強制設定為 A4 直式，並縮小邊距以容納更多內容 */
-            @page { size: A4 portrait; margin: 10mm; }
+            /* 縮小紙張邊距榨出更多空間 */
+            @page { size: A4 portrait; margin: 8mm; }
             
             body > header, body > main { display: none !important; }
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
@@ -28,9 +28,8 @@
                 display: block !important;
                 position: relative;
                 width: 100%;
-                /* 確保不會超出 A4 高度 */
                 max-height: 297mm; 
-                padding: 15px 25px;
+                padding: 5px 15px; /* 縮小列印區內部邊距 */
                 box-sizing: border-box;
                 font-family: 'Noto Sans TC', sans-serif;
                 -webkit-print-color-adjust: exact;
@@ -46,35 +45,36 @@
                 opacity: 0.15;
             }
 
-            /* 縮小 Header 與個人資訊的間距 */
-            .print-header { text-align: center; margin-bottom: 15px; border-bottom: 3px solid #1e293b; padding-bottom: 10px; }
-            .print-logo { max-height: 80px; margin-bottom: 10px; object-fit: contain; }
-            .print-title { font-size: 22px; font-weight: 900; color: #1e293b; letter-spacing: 2px; }
+            /* 壓縮 Header */
+            .print-header { text-align: center; margin-bottom: 8px; border-bottom: 2px solid #1e293b; padding-bottom: 8px; }
+            .print-logo { max-height: 55px; margin-bottom: 6px; object-fit: contain; }
+            .print-title { font-size: 18px; font-weight: 900; color: #1e293b; letter-spacing: 1px; }
             
-            .print-user-card { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; background: rgba(255,255,255,0.85); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1; }
-            .print-name { font-size: 32px; font-weight: 900; margin: 5px 0 0 0; color: #0f172a; line-height: 1; }
-            .print-id { font-size: 14px; font-family: 'Orbitron'; color: #64748b; font-weight: bold; }
+            /* 壓縮 使用者資料卡片 */
+            .print-user-card { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; background: rgba(255,255,255,0.85); padding: 10px 15px; border-radius: 8px; border: 1px solid #cbd5e1; }
+            .print-name { font-size: 26px; font-weight: 900; margin: 3px 0 0 0; color: #0f172a; line-height: 1; }
+            .print-id { font-size: 12px; font-family: 'Orbitron'; color: #64748b; font-weight: bold; }
             
-            .print-vehicle { font-size: 12px; color: #ea580c; font-weight: 900; margin-left: 12px; padding: 2px 6px; border: 1px solid #ea580c; border-radius: 4px; display: inline-block; vertical-align: middle; }
+            .print-vehicle { font-size: 11px; color: #ea580c; font-weight: 900; margin-left: 10px; padding: 1px 5px; border: 1px solid #ea580c; border-radius: 4px; display: inline-block; vertical-align: middle; }
 
-            .print-stats { display: flex; gap: 30px; text-align: right; }
+            .print-stats { display: flex; gap: 20px; text-align: right; }
             .print-stats-item { display: flex; flex-direction: column; }
-            .print-stats-label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
-            .print-stats-value { font-size: 20px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
+            .print-stats-label { font-size: 9px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+            .print-stats-value { font-size: 16px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
 
-            /* 新增：列印版圖表容器樣式 */
-            .print-chart-container { margin-bottom: 15px; background: rgba(15, 23, 42, 0.05); padding: 10px; border: 1px solid #cbd5e1; border-radius: 12px; text-align: center; }
-            .print-chart-title { font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 5px; text-align: left; letter-spacing: 1px; }
-            .print-chart-container img { max-width: 100%; height: auto; max-height: 180px; object-fit: contain; mix-blend-mode: multiply; }
+            /* 壓縮 圖表區塊 */
+            .print-chart-container { margin-bottom: 10px; background: rgba(15, 23, 42, 0.05); padding: 5px 10px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; }
+            .print-chart-title { font-size: 10px; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 3px; text-align: left; letter-spacing: 1px; }
+            .print-chart-container img { max-width: 100%; height: auto; max-height: 125px; object-fit: contain; mix-blend-mode: multiply; }
 
-            /* 稍微緊縮表格，確保塞得進同一頁 */
+            /* 壓縮 表格 (關鍵！) */
             .print-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 1px #cbd5e1; }
-            .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
-            .print-table th { background: #f8fafc; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; }
-            .print-table td { font-size: 12px; font-weight: 500; color: #1e293b; }
+            .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 5px 8px; text-align: left; vertical-align: top; }
+            .print-table th { background: #f8fafc; font-size: 10px; font-weight: 900; color: #475569; text-transform: uppercase; }
+            .print-table td { font-size: 10px; font-weight: 500; color: #1e293b; line-height: 1.3; }
             
-            .print-route { display: block; font-size: 11px; color: #64748b; margin-top: 2px; }
-            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 10px; margin-left: 4px; letter-spacing: 0.5px; }
+            .print-route { display: block; font-size: 9.5px; color: #64748b; margin-top: 1px; }
+            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 9.5px; margin-left: 4px; letter-spacing: 0.5px; }
         }
     </style>
 </head>
@@ -103,7 +103,6 @@
     </header>
 
     <main class="max-w-6xl mx-auto space-y-6">
-        
         <section id="profileCard" class="glass-panel rounded-3xl p-8 hidden">
             <div class="flex flex-col md:flex-row justify-between gap-8 text-center md:text-left items-center">
                 <div class="flex-1">
@@ -221,10 +220,10 @@
         <table class="print-table">
             <thead>
                 <tr>
-                    <th style="width: 15%">日期 (Date)</th>
-                    <th style="width: 55%">航段明細與紀錄 (Stage & Logs)</th>
-                    <th style="width: 15%">單日里程 (KM)</th>
-                    <th style="width: 15%">單日用時 (Time)</th>
+                    <th style="width: 12%">日期 (Date)</th>
+                    <th style="width: 60%">航段明細與紀錄 (Stage & Logs)</th>
+                    <th style="width: 14%">單日里程 (KM)</th>
+                    <th style="width: 14%">單日用時 (Time)</th>
                 </tr>
             </thead>
             <tbody id="printTableBody">
@@ -244,7 +243,6 @@
             return String(rawDate).trim();
         }
 
-        // 初始化高程圖
         function initElevationChart() {
             if (isChartInitialized) return; 
             
@@ -287,40 +285,20 @@
                     layout: { padding: { left: 10, right: 10 } },
                     responsive: true,
                     maintainAspectRatio: false,
-                    // 動畫完成後，立刻拍一張快照丟進列印區塊
                     animation: {
                         onComplete: function() {
                             document.getElementById('printChartImg').src = this.toBase64Image();
                         }
                     },
                     plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                            titleFont: { family: 'Noto Sans TC', size: 14 },
-                            bodyFont: { family: 'Orbitron', size: 16, weight: 'bold' },
-                            bodyColor: '#fbbf24',
-                            borderColor: '#fbbf24',
-                            borderWidth: 1,
-                            padding: 12,
-                            displayColors: false,
-                            callbacks: {
-                                label: function(context) {
-                                    return context.parsed.y.toLocaleString() + ' m';
-                                }
-                            }
-                        }
+                        legend: { display: false }
                     },
                     scales: {
                         y: {
                             beginAtZero: false,
                             min: 3000, 
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { 
-                                color: '#64748b', 
-                                font: { family: 'Orbitron' },
-                                padding: 8 
-                            }
+                            ticks: { color: '#64748b', font: { family: 'Orbitron' }, padding: 8 }
                         },
                         x: {
                             grid: { display: false },
@@ -448,7 +426,9 @@
                             let routeTextPrint = (startPoint && endPoint) 
                                 ? `<span class="print-route">${startLoc} ➔ ${endLoc}</span>`
                                 : `<span class="print-route">${startLoc} ➔ 騎乘中...</span>`;
-                            sectionDetailsPrint.push(`<div style="margin-bottom: 8px;"><strong>${secName}</strong> <span class="print-time">(${sectionStatsText})</span>${routeTextPrint}</div>`);
+                            
+                            // 關鍵：將 marginBottom 從 8px 縮小到 3px，大幅節省高度
+                            sectionDetailsPrint.push(`<div style="margin-bottom: 3px;"><strong>${secName}</strong> <span class="print-time">(${sectionStatsText})</span>${routeTextPrint}</div>`);
                         }
                     });
 
@@ -474,10 +454,10 @@
 
                     printHtml += `
                         <tr>
-                            <td style="font-family: 'Orbitron'; font-weight: bold;">${day}</td>
+                            <td style="font-family: 'Orbitron'; font-weight: bold; vertical-align: middle;">${day}</td>
                             <td>${sectionDetailsPrint.length > 0 ? sectionDetailsPrint.join('') : '---'}</td>
-                            <td style="font-family: 'Orbitron'; font-weight: bold;">${dayKM.toFixed(1)} km</td>
-                            <td style="font-family: 'Orbitron'; font-weight: bold;">${dayTimeString}</td>
+                            <td style="font-family: 'Orbitron'; font-weight: bold; vertical-align: middle;">${dayKM.toFixed(1)} km</td>
+                            <td style="font-family: 'Orbitron'; font-weight: bold; vertical-align: middle;">${dayTimeString}</td>
                         </tr>
                     `;
                 });
