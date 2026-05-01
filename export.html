@@ -12,16 +12,14 @@
         .tech-font { font-family: 'Orbitron', sans-serif; }
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
         .split-row:hover { background: rgba(51, 65, 85, 0.4); }
-        .time-tag { font-size: 10px; color: #fbbf24; font-family: 'Orbitron'; margin-left: 4px; font-weight: 700; }
+        .time-tag { font-size: 10px; color: #fbbf24; font-family: 'Orbitron'; margin-left: 4px; font-weight: 700; letter-spacing: 0.5px; }
         .data-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
 
         /* --- 列印專用樣式區塊 --- */
         @media print {
-            /* 隱藏網頁版的 Header 與 Main 內容 */
             body > header, body > main { display: none !important; }
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
             
-            /* 顯示列印專屬區塊 */
             #printArea {
                 display: block !important;
                 position: relative;
@@ -34,18 +32,16 @@
                 color-adjust: exact;
             }
 
-            /* 珠穆朗瑪峰背景圖與比例調整 */
             .print-bg {
                 position: fixed;
                 top: 0; left: 0; width: 100vw; height: 100vh;
                 object-fit: cover;
-                object-position: center 25%; /* 將視覺焦點稍微往上移，凸顯山峰 */
+                object-position: center 25%;
                 z-index: -1;
-                opacity: 0.15; /* 調淡背景以免蓋過文字 */
+                opacity: 0.15;
             }
 
             .print-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e293b; padding-bottom: 20px; }
-            /* LOGO 放大 */
             .print-logo { max-height: 120px; margin-bottom: 20px; object-fit: contain; }
             .print-title { font-size: 26px; font-weight: 900; color: #1e293b; letter-spacing: 2px; }
             
@@ -53,7 +49,6 @@
             .print-name { font-size: 40px; font-weight: 900; margin: 5px 0 0 0; color: #0f172a; line-height: 1; }
             .print-id { font-size: 16px; font-family: 'Orbitron'; color: #64748b; font-weight: bold; }
             
-            /* 新增列印版車款樣式 */
             .print-vehicle { font-size: 14px; color: #ea580c; font-weight: 900; margin-left: 12px; padding: 2px 8px; border: 1px solid #ea580c; border-radius: 4px; display: inline-block; vertical-align: middle; }
 
             .print-stats { display: flex; gap: 40px; text-align: right; }
@@ -66,9 +61,8 @@
             .print-table th { background: #f8fafc; font-size: 12px; font-weight: 900; color: #475569; text-transform: uppercase; }
             .print-table td { font-size: 14px; font-weight: 500; color: #1e293b; }
             
-            /* 列印版專用的路由文字樣式 */
             .print-route { display: block; font-size: 12px; color: #64748b; margin-top: 2px; }
-            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 11px; margin-left: 4px; }
+            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 11px; margin-left: 4px; letter-spacing: 0.5px; }
         }
     </style>
 </head>
@@ -248,7 +242,7 @@
                 printBtn.classList.remove('hidden');
                 
                 const driverName = user.N || user.Name || "---";
-                const vehicleType = user.Type || "未登記車款"; // 抓取車款資訊
+                const vehicleType = user.Type || "未登記車款";
                 
                 document.getElementById('dispName').innerText = driverName;
                 document.getElementById('dispID').innerText = `ID: ${searchID}`;
@@ -286,6 +280,12 @@
                         
                         const info = itinerary.find(i => i.Day === day && i.Section.trim().toUpperCase() === secName.toUpperCase());
                         
+                        // 取得該區段的里程數 (如果沒有資料則顯示 0.0)
+                        let secKMText = "0.0";
+                        if (info && info.D) {
+                            secKMText = parseFloat(info.D).toFixed(1);
+                        }
+
                         let actualTimeText = "Incomplete";
                         if (startPoint && endPoint) {
                             const startTime = new Date(startPoint.Timestamp);
@@ -307,15 +307,18 @@
                             const startLoc = (startPoint && startPoint.LocationName) ? startPoint.LocationName.trim() : "未知起點";
                             const endLoc = (endPoint && endPoint.LocationName) ? endPoint.LocationName.trim() : "未知終點";
 
+                            // 將區段里程與區段時間合併顯示
+                            const sectionStatsText = `${secKMText}km / ${actualTimeText}`;
+
                             let routeTextWeb = (startPoint && endPoint) 
                                 ? `<span class="block text-[11px] text-slate-400 font-normal tracking-normal mt-0.5">${startLoc} ➔ ${endLoc}</span>`
                                 : `<span class="block text-[11px] text-slate-400 font-normal tracking-normal mt-0.5">${startLoc} ➔ 騎乘中...</span>`;
-                            sectionDetailsWeb.push(`<div class="inline-block align-top mr-6 mb-3">${secName} <span class="time-tag">(${actualTimeText})</span>${routeTextWeb}</div>`);
+                            sectionDetailsWeb.push(`<div class="inline-block align-top mr-6 mb-3">${secName} <span class="time-tag">(${sectionStatsText})</span>${routeTextWeb}</div>`);
 
                             let routeTextPrint = (startPoint && endPoint) 
                                 ? `<span class="print-route">${startLoc} ➔ ${endLoc}</span>`
                                 : `<span class="print-route">${startLoc} ➔ 騎乘中...</span>`;
-                            sectionDetailsPrint.push(`<div style="margin-bottom: 12px;"><strong>${secName}</strong> <span class="print-time">(${actualTimeText})</span>${routeTextPrint}</div>`);
+                            sectionDetailsPrint.push(`<div style="margin-bottom: 12px;"><strong>${secName}</strong> <span class="print-time">(${sectionStatsText})</span>${routeTextPrint}</div>`);
                         }
                     });
 
