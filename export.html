@@ -15,13 +15,12 @@
         .split-row:hover { background: rgba(51, 65, 85, 0.4); }
         .data-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
 
-        /* 網頁版單段數據排版 */
         .web-stage-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); padding: 6px 0; }
         .web-stage-row:last-child { border-bottom: none; }
         .web-route { font-size: 11px; color: #94a3b8; margin-left: 10px; font-weight: normal; }
         .web-time { font-family: 'Orbitron'; color: #fbbf24; font-size: 11px; font-weight: 700; }
 
-        /* --- 列印專用樣式區塊 (完美比例版) --- */
+        /* --- 列印專用樣式區塊 --- */
         @media print {
             @page { size: A4 portrait; margin: 8mm; }
             
@@ -63,18 +62,16 @@
             .print-stats-label { font-size: 9px; color: #64748b; font-weight: bold; text-transform: uppercase; }
             .print-stats-value { font-size: 16px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
 
-            /* 恢復高度圖的霸氣比例 */
-            .print-chart-container { margin-bottom: 8px; background: rgba(15, 23, 42, 0.05); padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; }
-            .print-chart-title { font-size: 10px; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 2px; text-align: left; letter-spacing: 1px; }
-            .print-chart-container img { max-width: 100%; height: auto; max-height: 190px; object-fit: contain; }
+            .print-chart-container { margin-bottom: 8px; background: rgba(15, 23, 42, 0.05); padding: 8px 10px 4px 10px; border: 1px solid #cbd5e1; border-radius: 8px; }
+            .print-chart-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4px; }
+            .print-chart-title { font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
+            .print-chart-container img { max-width: 100%; height: auto; max-height: 180px; object-fit: contain; margin: 0 auto; display: block; }
 
-            /* 表格與列印樣式 */
             .print-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 1px #cbd5e1; }
             .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; vertical-align: middle; }
             .print-table th { background: #f8fafc; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; }
             .print-table td { font-size: 10.5px; font-weight: 500; color: #1e293b; line-height: 1.3; }
             
-            /* 將 SS 單段資訊調整間距 */
             .print-stage-row { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; border-bottom: 1px dotted #cbd5e1; padding-bottom: 3px; }
             .print-stage-row:last-child { margin-bottom: 0; border-bottom: none; padding-bottom: 0; }
             .print-route { font-size: 10px; color: #64748b; margin-left: 6px; }
@@ -206,10 +203,6 @@
                     <span class="print-stats-value" id="printTotalKM">0.0</span>
                 </div>
                 <div class="print-stats-item">
-                    <span class="print-stats-label">總落差 (Elevation Change)</span>
-                    <span class="print-stats-value" id="printTotalElevationChange">4,124</span>
-                </div>
-                <div class="print-stats-item">
                     <span class="print-stats-label">總用時 (Total Time)</span>
                     <span class="print-stats-value" id="printTotalTime">0h 0m</span>
                 </div>
@@ -217,7 +210,19 @@
         </div>
 
         <div class="print-chart-container">
-            <div class="print-chart-title">Elevation Profile (Altitude vs Waypoints)</div>
+            <div class="print-chart-header">
+                <div class="print-chart-title">Elevation Profile</div>
+                <div style="display: flex; gap: 15px; text-align: right;">
+                    <div>
+                        <span style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase;">累計總落差</span>
+                        <div style="font-family: 'Orbitron'; font-weight: 900; font-size: 15px; color: #0284c7;" id="printTotalElevationChange">0<span style="font-size: 10px; margin-left: 2px;">m</span></div>
+                    </div>
+                    <div style="border-left: 1px solid #cbd5e1; padding-left: 15px;">
+                        <span style="font-size: 8px; color: #64748b; font-weight: bold; text-transform: uppercase;">最高點</span>
+                        <div style="font-family: 'Orbitron'; font-weight: 900; font-size: 15px; color: #dc2626;">5,248<span style="font-size: 10px; margin-left: 2px;">m</span></div>
+                    </div>
+                </div>
+            </div>
             <img id="printChartImg" alt="Elevation Chart Snapshot">
         </div>
 
@@ -261,25 +266,23 @@
             }
             const totalChangeText = totalChange.toLocaleString();
             document.getElementById('totalElevationChange').innerText = totalChangeText;
-            document.getElementById('printTotalElevationChange').innerText = totalChangeText;
+            
+            // 寫入列印版圖表上方的落差數據
+            document.getElementById('printTotalElevationChange').innerHTML = `${totalChangeText}<span style="font-size: 10px; margin-left: 2px;">m</span>`;
 
             const ctx = document.getElementById('elevationChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
             gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); 
             gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
 
-            // ============================================
-            // 新增：客製化外掛 (Plugin) 顯示點位與落差標籤
-            // ============================================
             const rallyDataPlugin = {
                 id: 'rallyDataPlugin',
                 afterDatasetsDraw(chart, args, pluginOptions) {
                     const { ctx, data } = chart;
                     ctx.save();
-                    
                     const meta = chart.getDatasetMeta(0);
                     
-                    // 1. 繪製區段落差 (爬升/下降)
+                    // 繪製區段落差 (爬升/下降) - 移除點位上方的絕對高度以保持版面乾淨
                     ctx.font = 'bold 10px "Orbitron", sans-serif';
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
@@ -293,31 +296,15 @@
                         
                         if (diff !== 0) {
                             const midX = (pt1.x + pt2.x) / 2;
-                            const midY = ((pt1.y + pt2.y) / 2) - 12; // 稍微浮在線的上方
+                            const midY = ((pt1.y + pt2.y) / 2) - 12;
                             
                             const diffText = diff > 0 ? `▲+${diff}` : `▼${diff}`;
-                            ctx.fillStyle = diff > 0 ? '#ef4444' : '#38bdf8'; // 紅色代表爬升，水藍代表下降
-                            
-                            // 增加陰影確保文字在圖表與列印白底上都清晰
+                            ctx.fillStyle = diff > 0 ? '#ef4444' : '#38bdf8';
                             ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
                             ctx.shadowBlur = 4;
-                            
                             ctx.fillText(diffText, midX, midY);
                         }
                     }
-                    
-                    // 2. 繪製每一個站點的絕對高度 (印在節點正上方)
-                    ctx.font = 'bold 12px Orbitron';
-                    ctx.fillStyle = '#f8fafc'; // 白色字體
-                    ctx.textBaseline = 'bottom';
-                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-                    ctx.shadowBlur = 4;
-
-                    meta.data.forEach((datapoint, index) => {
-                        const value = data.datasets[0].data[index];
-                        ctx.fillText(value, datapoint.x, datapoint.y - 6);
-                    });
-                    
                     ctx.restore();
                 }
             };
@@ -341,11 +328,10 @@
                         tension: 0.4 
                     }]
                 },
-                plugins: [rallyDataPlugin], // 套用剛剛寫好的外掛
+                plugins: [rallyDataPlugin],
                 options: {
                     animation: false,
-                    // 增加 top padding 避免最高點的文字被切掉
-                    layout: { padding: { left: 15, right: 15, top: 25 } }, 
+                    layout: { padding: { left: 15, right: 15, top: 15 } }, 
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -370,7 +356,7 @@
                         y: {
                             beginAtZero: false,
                             min: 3000, 
-                            suggestedMax: 5600, // 撐高 Y 軸上限，把空間讓給頂部文字
+                            suggestedMax: 5600, 
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
                             ticks: { color: '#64748b', font: { family: 'Orbitron' }, padding: 8 }
                         },
@@ -382,7 +368,6 @@
                 }
             });
 
-            // 稍微延遲 0.3 秒再拍快照，確保文字外掛完全渲染完畢
             setTimeout(() => {
                 document.getElementById('printChartImg').src = chartInstance.toBase64Image();
             }, 300);
