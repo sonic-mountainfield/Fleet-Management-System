@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西藏拉力賽 - 海拔高程圖</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { background-color: #0f172a; font-family: 'Noto Sans TC', sans-serif; color: #f1f5f9; padding: 2rem; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+        .tech-font { font-family: 'Orbitron', sans-serif; }
+    </style>
+</head>
+<body class="max-w-6xl mx-auto">
+
+    <section class="glass-panel rounded-3xl overflow-hidden p-6 shadow-2xl">
+        <div class="border-b border-slate-800 pb-4 mb-4 flex justify-between items-end">
+            <div>
+                <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 italic">Elevation Profile</h3>
+                <h2 class="text-xl font-black text-white mt-1">賽段海拔高度分析 (公尺)</h2>
+            </div>
+            <div class="text-right">
+                <span class="text-[10px] text-slate-500 font-bold uppercase">最高點</span>
+                <p class="text-2xl text-red-500 tech-font font-black">5,248<span class="text-xs ml-1">m</span></p>
+            </div>
+        </div>
+        
+        <div class="relative w-full h-[300px]">
+            <canvas id="elevationChart"></canvas>
+        </div>
+    </section>
+
+    <script>
+        // 抓取剛剛行程表中的主要站點與其大約真實海拔高度 (公尺)
+        const labels = ['拉薩', '尼木', '日喀則', '嘉措拉山口', '珠峰大本營', '定日', '江孜', '羊卓雍措', '拉薩'];
+        const elevationData = [3650, 3800, 3840, 5248, 5200, 4300, 3977, 4441, 3650];
+
+        const ctx = document.getElementById('elevationChart').getContext('2d');
+
+        // 建立漸層背景 (讓山脈下方有發光科技感)
+        const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); // Tailwind Yellow-400
+        gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '海拔高度 (m)',
+                    data: elevationData,
+                    borderColor: '#fbbf24', // 黃色線條
+                    backgroundColor: gradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#0f172a',
+                    pointBorderColor: '#fbbf24',
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8,
+                    fill: true,
+                    tension: 0.4 // 讓線條變成平滑的曲線 (模擬山脈起伏)
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                        titleFont: { family: 'Noto Sans TC', size: 14 },
+                        bodyFont: { family: 'Orbitron', size: 16, weight: 'bold' },
+                        bodyColor: '#fbbf24',
+                        borderColor: '#fbbf24',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function(context) {
+                                return context.parsed.y + ' m';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        min: 3000, // 設最低為 3000m，讓高度落差的視覺效果更明顯
+                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                        ticks: { color: '#64748b', font: { family: 'Orbitron' } }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { color: '#94a3b8', font: { family: 'Noto Sans TC', weight: 'bold' } }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
