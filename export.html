@@ -6,6 +6,8 @@
     <title>SUNNY HOUSE - 真實數據指揮中心</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+TC:wght@500;700;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <style>
         /* 原本的網頁樣式 */
         body { background-color: #0f172a; font-family: 'Noto Sans TC', sans-serif; color: #f1f5f9; }
@@ -75,7 +77,7 @@
                 <p class="text-slate-400 text-xs font-bold uppercase tracking-widest">數據監控與即時匯出系統 - 真實用時版</p>
             </div>
             <div class="flex gap-2 w-full md:w-auto">
-                <input type="text" id="searchID" placeholder="輸入 ID (如 U100)" 
+                <input type="text" id="searchID" placeholder="輸入 ID (如 U005)" 
                        class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-lg w-full md:w-48 tech-font text-yellow-500 focus:outline-none focus:border-yellow-500">
                 <button onclick="fetchDriverStats()" 
                         class="bg-white text-slate-900 px-6 py-2 rounded-lg font-black hover:bg-yellow-500 transition-colors shrink-0">查詢數據</button>
@@ -91,6 +93,7 @@
     </header>
 
     <main class="max-w-6xl mx-auto space-y-6">
+        
         <section id="profileCard" class="glass-panel rounded-3xl p-8 hidden">
             <div class="flex flex-col md:flex-row justify-between gap-8 text-center md:text-left items-center">
                 <div class="flex-1">
@@ -120,6 +123,29 @@
             </div>
         </section>
 
+        <section id="elevationCard" class="glass-panel rounded-3xl overflow-hidden p-6 hidden">
+            <div class="border-b border-slate-800 pb-4 mb-4 flex justify-between items-end">
+                <div>
+                    <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 italic">Elevation Profile</h3>
+                    <h2 class="text-xl font-black text-white mt-1">賽段海拔高度分析 (公尺)</h2>
+                </div>
+                <div class="flex gap-6 text-right">
+                    <div>
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">累計總落差</span>
+                        <p class="text-2xl text-blue-400 tech-font font-black"><span id="totalElevationChange">0</span><span class="text-xs ml-1 opacity-70">m</span></p>
+                    </div>
+                    <div class="border-l border-slate-700 pl-6">
+                        <span class="text-[10px] text-slate-500 font-bold uppercase">最高點</span>
+                        <p class="text-2xl text-red-500 tech-font font-black">5,248<span class="text-xs ml-1 opacity-70">m</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="relative w-full h-[300px]">
+                <canvas id="elevationChart"></canvas>
+            </div>
+        </section>
+
         <section class="glass-panel rounded-3xl overflow-hidden">
             <div class="p-6 border-b border-slate-800 flex justify-between items-center bg-slate-800/30">
                 <h3 class="text-sm font-black uppercase tracking-widest text-slate-400 italic">Daily Telemetry Log (Actual Time)</h3>
@@ -128,11 +154,11 @@
                 <table class="w-full text-left">
                     <thead class="bg-slate-800/50 text-[10px] uppercase font-black text-slate-500">
                         <tr>
-                            <th class="p-6">日期</th>
+                            <th class="p-6 whitespace-nowrap">日期</th>
                             <th class="p-6">航段明細 (實際用時與路線)</th>
-                            <th class="p-6">單日里程</th>
-                            <th class="p-6">當日實際總時數</th>
-                            <th class="p-6 text-right">狀態</th>
+                            <th class="p-6 whitespace-nowrap">單日里程</th>
+                            <th class="p-6 whitespace-nowrap">當日實際總時數</th>
+                            <th class="p-6 text-right whitespace-nowrap">狀態</th>
                         </tr>
                     </thead>
                     <tbody id="splitsTableBody" class="text-sm">
@@ -180,10 +206,10 @@
         <table class="print-table">
             <thead>
                 <tr>
-                    <th>日期 (Date)</th>
-                    <th>航段明細與紀錄 (Stage & Logs)</th>
-                    <th>單日里程 (KM)</th>
-                    <th>單日用時 (Time)</th>
+                    <th style="width: 15%">日期 (Date)</th>
+                    <th style="width: 55%">航段明細與紀錄 (Stage & Logs)</th>
+                    <th style="width: 15%">單日里程 (KM)</th>
+                    <th style="width: 15%">單日用時 (Time)</th>
                 </tr>
             </thead>
             <tbody id="printTableBody">
@@ -193,6 +219,7 @@
 
     <script>
         const API_BASE = 'https://sheetdb.io/api/v1/j7wain8kbsyu9';
+        let isChartInitialized = false;
 
         function formatExcelDate(rawDate) {
             if (!isNaN(rawDate) && parseFloat(rawDate) > 40000) {
@@ -200,6 +227,86 @@
                 return `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
             }
             return String(rawDate).trim();
+        }
+
+        // 初始化高程圖
+        function initElevationChart() {
+            if (isChartInitialized) return; // 避免重複渲染
+            
+            const labels = ['拉薩', '尼木', '日喀則', '嘉措拉山口', '珠峰大本營', '定日', '江孜', '羊卓雍措', '拉薩'];
+            const elevationData = [3650, 3800, 3840, 5248, 5200, 4300, 3977, 4441, 3650];
+
+            let totalChange = 0;
+            for (let i = 1; i < elevationData.length; i++) {
+                totalChange += Math.abs(elevationData[i] - elevationData[i-1]);
+            }
+            document.getElementById('totalElevationChange').innerText = totalChange.toLocaleString();
+
+            const ctx = document.getElementById('elevationChart').getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, 0, 300);
+            gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); 
+            gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '海拔高度 (m)',
+                        data: elevationData,
+                        borderColor: '#fbbf24', 
+                        backgroundColor: gradient,
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0f172a',
+                        pointBorderColor: '#fbbf24',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 8,
+                        fill: true,
+                        tension: 0.4 
+                    }]
+                },
+                options: {
+                    layout: { padding: { left: 10, right: 10 } },
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                            titleFont: { family: 'Noto Sans TC', size: 14 },
+                            bodyFont: { family: 'Orbitron', size: 16, weight: 'bold' },
+                            bodyColor: '#fbbf24',
+                            borderColor: '#fbbf24',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y.toLocaleString() + ' m';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            min: 3000, 
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                            ticks: { 
+                                color: '#64748b', 
+                                font: { family: 'Orbitron' },
+                                padding: 8 
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#94a3b8', font: { family: 'Noto Sans TC', weight: 'bold' } }
+                        }
+                    }
+                }
+            });
+            isChartInitialized = true;
         }
 
         async function fetchDriverStats() {
@@ -210,10 +317,12 @@
             const tableBody = document.getElementById('splitsTableBody');
             const printTableBody = document.getElementById('printTableBody');
             const profile = document.getElementById('profileCard');
+            const elevationCard = document.getElementById('elevationCard');
             const printBtn = document.getElementById('printBtn');
             
             tableBody.innerHTML = '<tr><td colspan="5" class="p-20 text-center animate-pulse text-yellow-500 tech-font">衛星連線同步中...</td></tr>';
             printBtn.classList.add('hidden');
+            elevationCard.classList.add('hidden');
 
             try {
                 const [itiRes, checkRes, userRes] = await Promise.all([
@@ -237,9 +346,11 @@
                     return;
                 }
 
-                // 更新網頁版 UI
+                // 顯示介面與高程圖
                 profile.classList.remove('hidden');
+                elevationCard.classList.remove('hidden');
                 printBtn.classList.remove('hidden');
+                initElevationChart(); // 啟動圖表渲染
                 
                 const driverName = user.N || user.Name || "---";
                 const vehicleType = user.Type || "未登記車款";
@@ -248,7 +359,6 @@
                 document.getElementById('dispID').innerText = `ID: ${searchID}`;
                 document.getElementById('dispType').innerText = `VEHICLE: ${vehicleType}`;
 
-                // 同步更新列印版表頭資訊
                 document.getElementById('printDriverName').innerText = driverName;
                 document.getElementById('printDriverID').innerText = `ID: ${searchID}`;
                 document.getElementById('printVehicle').innerText = `車款: ${vehicleType}`;
@@ -280,7 +390,6 @@
                         
                         const info = itinerary.find(i => i.Day === day && i.Section.trim().toUpperCase() === secName.toUpperCase());
                         
-                        // 取得該區段的里程數 (如果沒有資料則顯示 0.0)
                         let secKMText = "0.0";
                         if (info && info.D) {
                             secKMText = parseFloat(info.D).toFixed(1);
@@ -307,7 +416,6 @@
                             const startLoc = (startPoint && startPoint.LocationName) ? startPoint.LocationName.trim() : "未知起點";
                             const endLoc = (endPoint && endPoint.LocationName) ? endPoint.LocationName.trim() : "未知終點";
 
-                            // 將區段里程與區段時間合併顯示
                             const sectionStatsText = `${secKMText}km / ${actualTimeText}`;
 
                             let routeTextWeb = (startPoint && endPoint) 
