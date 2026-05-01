@@ -66,9 +66,9 @@
             /* 恢復高度圖的霸氣比例 */
             .print-chart-container { margin-bottom: 8px; background: rgba(15, 23, 42, 0.05); padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; }
             .print-chart-title { font-size: 10px; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 2px; text-align: left; letter-spacing: 1px; }
-            .print-chart-container img { max-width: 100%; height: auto; max-height: 190px; object-fit: contain; } /* 將高度改回 190px */
+            .print-chart-container img { max-width: 100%; height: auto; max-height: 190px; object-fit: contain; }
 
-            /* 表格與列印樣式 (壓縮行距以讓出空間給高度圖) */
+            /* 表格與列印樣式 */
             .print-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 1px #cbd5e1; }
             .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 6px 8px; text-align: left; vertical-align: middle; }
             .print-table th { background: #f8fafc; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; }
@@ -186,7 +186,6 @@
         </section>
     </main>
 
-    <!-- 列印專用隱藏區塊 -->
     <div id="printArea" class="hidden">
         <img src="https://images.unsplash.com/photo-1544735716-392fe2489ffa?q=80&w=2000&auto=format&fit=crop" class="print-bg" alt="Mount Everest Background">
         
@@ -269,6 +268,60 @@
             gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); 
             gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
 
+            // ============================================
+            // 新增：客製化外掛 (Plugin) 顯示點位與落差標籤
+            // ============================================
+            const rallyDataPlugin = {
+                id: 'rallyDataPlugin',
+                afterDatasetsDraw(chart, args, pluginOptions) {
+                    const { ctx, data } = chart;
+                    ctx.save();
+                    
+                    const meta = chart.getDatasetMeta(0);
+                    
+                    // 1. 繪製區段落差 (爬升/下降)
+                    ctx.font = 'bold 10px "Orbitron", sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    
+                    for (let i = 0; i < meta.data.length - 1; i++) {
+                        const pt1 = meta.data[i];
+                        const pt2 = meta.data[i+1];
+                        const val1 = data.datasets[0].data[i];
+                        const val2 = data.datasets[0].data[i+1];
+                        const diff = val2 - val1;
+                        
+                        if (diff !== 0) {
+                            const midX = (pt1.x + pt2.x) / 2;
+                            const midY = ((pt1.y + pt2.y) / 2) - 12; // 稍微浮在線的上方
+                            
+                            const diffText = diff > 0 ? `▲+${diff}` : `▼${diff}`;
+                            ctx.fillStyle = diff > 0 ? '#ef4444' : '#38bdf8'; // 紅色代表爬升，水藍代表下降
+                            
+                            // 增加陰影確保文字在圖表與列印白底上都清晰
+                            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                            ctx.shadowBlur = 4;
+                            
+                            ctx.fillText(diffText, midX, midY);
+                        }
+                    }
+                    
+                    // 2. 繪製每一個站點的絕對高度 (印在節點正上方)
+                    ctx.font = 'bold 12px Orbitron';
+                    ctx.fillStyle = '#f8fafc'; // 白色字體
+                    ctx.textBaseline = 'bottom';
+                    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+                    ctx.shadowBlur = 4;
+
+                    meta.data.forEach((datapoint, index) => {
+                        const value = data.datasets[0].data[index];
+                        ctx.fillText(value, datapoint.x, datapoint.y - 6);
+                    });
+                    
+                    ctx.restore();
+                }
+            };
+
             chartInstance = new Chart(ctx, {
                 type: 'line',
                 data: {
@@ -288,9 +341,11 @@
                         tension: 0.4 
                     }]
                 },
+                plugins: [rallyDataPlugin], // 套用剛剛寫好的外掛
                 options: {
                     animation: false,
-                    layout: { padding: { left: 10, right: 10 } },
+                    // 增加 top padding 避免最高點的文字被切掉
+                    layout: { padding: { left: 15, right: 15, top: 25 } }, 
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
@@ -315,6 +370,7 @@
                         y: {
                             beginAtZero: false,
                             min: 3000, 
+                            suggestedMax: 5600, // 撐高 Y 軸上限，把空間讓給頂部文字
                             grid: { color: 'rgba(255, 255, 255, 0.05)' },
                             ticks: { color: '#64748b', font: { family: 'Orbitron' }, padding: 8 }
                         },
@@ -326,9 +382,10 @@
                 }
             });
 
+            // 稍微延遲 0.3 秒再拍快照，確保文字外掛完全渲染完畢
             setTimeout(() => {
                 document.getElementById('printChartImg').src = chartInstance.toBase64Image();
-            }, 200);
+            }, 300);
         }
 
         async function fetchDriverStats() {
