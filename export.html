@@ -70,7 +70,7 @@
                     <thead class="bg-slate-800/50 text-[10px] uppercase font-black text-slate-500">
                         <tr>
                             <th class="p-6">日期</th>
-                            <th class="p-6">航段明細 (實際用時)</th>
+                            <th class="p-6">航段明細 (實際用時與路線)</th>
                             <th class="p-6">單日里程</th>
                             <th class="p-6">當日實際總時數</th>
                             <th class="p-6 text-right">狀態</th>
@@ -185,7 +185,20 @@
                         }
 
                         if (info) {
-                            sectionDetails.push(`${secName} <span class="time-tag">(${actualTimeText})</span>`);
+                            // 抓取起終點地名
+                            const startLoc = (startPoint && startPoint.LocationName) ? startPoint.LocationName.trim() : "未知起點";
+                            const endLoc = (endPoint && endPoint.LocationName) ? endPoint.LocationName.trim() : "未知終點";
+
+                            let routeText = "";
+                            if (startPoint && endPoint) {
+                                // 將路線資訊設為 block 屬性，使其在 SS 代號與時間下方換行顯示
+                                routeText = `<span class="block text-[11px] text-slate-400 font-normal tracking-normal mt-0.5">${startLoc} ➔ ${endLoc}</span>`;
+                            } else if (startPoint && !endPoint) {
+                                routeText = `<span class="block text-[11px] text-slate-400 font-normal tracking-normal mt-0.5">${startLoc} ➔ 騎乘中...</span>`;
+                            }
+
+                            // 將每個航段包裝在一個 inline-block 容器中，並給予右側和下方的間距 (mr-6 mb-3)
+                            sectionDetails.push(`<div class="inline-block align-top mr-6 mb-3">${secName} <span class="time-tag">(${actualTimeText})</span>${routeText}</div>`);
                         }
                     });
 
@@ -195,7 +208,7 @@
                         <tr class="split-row border-b border-slate-700/50">
                             <td class="p-6 font-black tech-font text-yellow-500">${day}</td>
                             <td class="p-6 text-slate-300 font-bold italic">
-                                ${sectionDetails.length > 0 ? sectionDetails.join('<span class="mx-2 opacity-20">|</span>') : '<span class="text-slate-700">---</span>'}
+                                ${sectionDetails.length > 0 ? sectionDetails.join('') : '<span class="text-slate-700">---</span>'}
                             </td>
                             <td class="p-6 text-xl text-white data-value">
                                 ${dayKM.toFixed(1)} <span class="text-[10px] text-slate-500 uppercase">km</span>
