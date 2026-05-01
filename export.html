@@ -9,7 +9,6 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <style>
-        /* 原本的網頁樣式 */
         body { background-color: #0f172a; font-family: 'Noto Sans TC', sans-serif; color: #f1f5f9; }
         .tech-font { font-family: 'Orbitron', sans-serif; }
         .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
@@ -19,6 +18,9 @@
 
         /* --- 列印專用樣式區塊 --- */
         @media print {
+            /* 強制設定為 A4 直式，並縮小邊距以容納更多內容 */
+            @page { size: A4 portrait; margin: 10mm; }
+            
             body > header, body > main { display: none !important; }
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
             
@@ -26,8 +28,9 @@
                 display: block !important;
                 position: relative;
                 width: 100%;
-                min-height: 100vh;
-                padding: 40px;
+                /* 確保不會超出 A4 高度 */
+                max-height: 297mm; 
+                padding: 15px 25px;
                 box-sizing: border-box;
                 font-family: 'Noto Sans TC', sans-serif;
                 -webkit-print-color-adjust: exact;
@@ -43,28 +46,35 @@
                 opacity: 0.15;
             }
 
-            .print-header { text-align: center; margin-bottom: 30px; border-bottom: 3px solid #1e293b; padding-bottom: 20px; }
-            .print-logo { max-height: 120px; margin-bottom: 20px; object-fit: contain; }
-            .print-title { font-size: 26px; font-weight: 900; color: #1e293b; letter-spacing: 2px; }
+            /* 縮小 Header 與個人資訊的間距 */
+            .print-header { text-align: center; margin-bottom: 15px; border-bottom: 3px solid #1e293b; padding-bottom: 10px; }
+            .print-logo { max-height: 80px; margin-bottom: 10px; object-fit: contain; }
+            .print-title { font-size: 22px; font-weight: 900; color: #1e293b; letter-spacing: 2px; }
             
-            .print-user-card { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 30px; background: rgba(255,255,255,0.85); padding: 20px; border-radius: 12px; border: 1px solid #cbd5e1; }
-            .print-name { font-size: 40px; font-weight: 900; margin: 5px 0 0 0; color: #0f172a; line-height: 1; }
-            .print-id { font-size: 16px; font-family: 'Orbitron'; color: #64748b; font-weight: bold; }
+            .print-user-card { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 15px; background: rgba(255,255,255,0.85); padding: 15px; border-radius: 12px; border: 1px solid #cbd5e1; }
+            .print-name { font-size: 32px; font-weight: 900; margin: 5px 0 0 0; color: #0f172a; line-height: 1; }
+            .print-id { font-size: 14px; font-family: 'Orbitron'; color: #64748b; font-weight: bold; }
             
-            .print-vehicle { font-size: 14px; color: #ea580c; font-weight: 900; margin-left: 12px; padding: 2px 8px; border: 1px solid #ea580c; border-radius: 4px; display: inline-block; vertical-align: middle; }
+            .print-vehicle { font-size: 12px; color: #ea580c; font-weight: 900; margin-left: 12px; padding: 2px 6px; border: 1px solid #ea580c; border-radius: 4px; display: inline-block; vertical-align: middle; }
 
-            .print-stats { display: flex; gap: 40px; text-align: right; }
+            .print-stats { display: flex; gap: 30px; text-align: right; }
             .print-stats-item { display: flex; flex-direction: column; }
-            .print-stats-label { font-size: 12px; color: #64748b; font-weight: bold; text-transform: uppercase; }
-            .print-stats-value { font-size: 24px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
+            .print-stats-label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; }
+            .print-stats-value { font-size: 20px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
 
+            /* 新增：列印版圖表容器樣式 */
+            .print-chart-container { margin-bottom: 15px; background: rgba(15, 23, 42, 0.05); padding: 10px; border: 1px solid #cbd5e1; border-radius: 12px; text-align: center; }
+            .print-chart-title { font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; margin-bottom: 5px; text-align: left; letter-spacing: 1px; }
+            .print-chart-container img { max-width: 100%; height: auto; max-height: 180px; object-fit: contain; mix-blend-mode: multiply; }
+
+            /* 稍微緊縮表格，確保塞得進同一頁 */
             .print-table { width: 100%; border-collapse: collapse; background: rgba(255,255,255,0.9); box-shadow: 0 0 0 1px #cbd5e1; }
-            .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 12px 16px; text-align: left; }
-            .print-table th { background: #f8fafc; font-size: 12px; font-weight: 900; color: #475569; text-transform: uppercase; }
-            .print-table td { font-size: 14px; font-weight: 500; color: #1e293b; }
+            .print-table th, .print-table td { border-bottom: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; }
+            .print-table th { background: #f8fafc; font-size: 11px; font-weight: 900; color: #475569; text-transform: uppercase; }
+            .print-table td { font-size: 12px; font-weight: 500; color: #1e293b; }
             
-            .print-route { display: block; font-size: 12px; color: #64748b; margin-top: 2px; }
-            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 11px; margin-left: 4px; letter-spacing: 0.5px; }
+            .print-route { display: block; font-size: 11px; color: #64748b; margin-top: 2px; }
+            .print-time { font-family: 'Orbitron'; font-weight: bold; color: #ea580c; font-size: 10px; margin-left: 4px; letter-spacing: 0.5px; }
         }
     </style>
 </head>
@@ -193,14 +203,19 @@
                     <span class="print-stats-value" id="printTotalKM">0.0</span>
                 </div>
                 <div class="print-stats-item">
-                    <span class="print-stats-label">完賽段數 (Stages)</span>
-                    <span class="print-stats-value" id="printTotalStages">0</span>
+                    <span class="print-stats-label">總落差 (Elevation Change)</span>
+                    <span class="print-stats-value" id="printTotalElevationChange">4,124</span>
                 </div>
                 <div class="print-stats-item">
                     <span class="print-stats-label">總用時 (Total Time)</span>
                     <span class="print-stats-value" id="printTotalTime">0h 0m</span>
                 </div>
             </div>
+        </div>
+
+        <div class="print-chart-container">
+            <div class="print-chart-title">Elevation Profile (Altitude vs Waypoints)</div>
+            <img id="printChartImg" alt="Elevation Chart Snapshot">
         </div>
 
         <table class="print-table">
@@ -231,7 +246,7 @@
 
         // 初始化高程圖
         function initElevationChart() {
-            if (isChartInitialized) return; // 避免重複渲染
+            if (isChartInitialized) return; 
             
             const labels = ['拉薩', '尼木', '日喀則', '嘉措拉山口', '珠峰大本營', '定日', '江孜', '羊卓雍措', '拉薩'];
             const elevationData = [3650, 3800, 3840, 5248, 5200, 4300, 3977, 4441, 3650];
@@ -240,7 +255,9 @@
             for (let i = 1; i < elevationData.length; i++) {
                 totalChange += Math.abs(elevationData[i] - elevationData[i-1]);
             }
-            document.getElementById('totalElevationChange').innerText = totalChange.toLocaleString();
+            const totalChangeText = totalChange.toLocaleString();
+            document.getElementById('totalElevationChange').innerText = totalChangeText;
+            document.getElementById('printTotalElevationChange').innerText = totalChangeText;
 
             const ctx = document.getElementById('elevationChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
@@ -270,6 +287,12 @@
                     layout: { padding: { left: 10, right: 10 } },
                     responsive: true,
                     maintainAspectRatio: false,
+                    // 動畫完成後，立刻拍一張快照丟進列印區塊
+                    animation: {
+                        onComplete: function() {
+                            document.getElementById('printChartImg').src = this.toBase64Image();
+                        }
+                    },
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -346,11 +369,10 @@
                     return;
                 }
 
-                // 顯示介面與高程圖
                 profile.classList.remove('hidden');
                 elevationCard.classList.remove('hidden');
                 printBtn.classList.remove('hidden');
-                initElevationChart(); // 啟動圖表渲染
+                initElevationChart(); 
                 
                 const driverName = user.N || user.Name || "---";
                 const vehicleType = user.Type || "未登記車款";
@@ -426,7 +448,7 @@
                             let routeTextPrint = (startPoint && endPoint) 
                                 ? `<span class="print-route">${startLoc} ➔ ${endLoc}</span>`
                                 : `<span class="print-route">${startLoc} ➔ 騎乘中...</span>`;
-                            sectionDetailsPrint.push(`<div style="margin-bottom: 12px;"><strong>${secName}</strong> <span class="print-time">(${sectionStatsText})</span>${routeTextPrint}</div>`);
+                            sectionDetailsPrint.push(`<div style="margin-bottom: 8px;"><strong>${secName}</strong> <span class="print-time">(${sectionStatsText})</span>${routeTextPrint}</div>`);
                         }
                     });
 
@@ -469,7 +491,6 @@
                 tableBody.innerHTML = splitsHtml;
 
                 document.getElementById('printTotalKM').innerText = totalKM.toFixed(1);
-                document.getElementById('printTotalStages').innerText = totalStageCount;
                 document.getElementById('printTotalTime').innerText = totalTimeString;
                 printTableBody.innerHTML = printHtml;
 
