@@ -267,47 +267,12 @@
             const totalChangeText = totalChange.toLocaleString();
             document.getElementById('totalElevationChange').innerText = totalChangeText;
             
-            // 寫入列印版圖表上方的落差數據
             document.getElementById('printTotalElevationChange').innerHTML = `${totalChangeText}<span style="font-size: 10px; margin-left: 2px;">m</span>`;
 
             const ctx = document.getElementById('elevationChart').getContext('2d');
             const gradient = ctx.createLinearGradient(0, 0, 0, 300);
             gradient.addColorStop(0, 'rgba(251, 191, 36, 0.5)'); 
             gradient.addColorStop(1, 'rgba(251, 191, 36, 0.0)');
-
-            const rallyDataPlugin = {
-                id: 'rallyDataPlugin',
-                afterDatasetsDraw(chart, args, pluginOptions) {
-                    const { ctx, data } = chart;
-                    ctx.save();
-                    const meta = chart.getDatasetMeta(0);
-                    
-                    // 繪製區段落差 (爬升/下降) - 移除點位上方的絕對高度以保持版面乾淨
-                    ctx.font = 'bold 10px "Orbitron", sans-serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    
-                    for (let i = 0; i < meta.data.length - 1; i++) {
-                        const pt1 = meta.data[i];
-                        const pt2 = meta.data[i+1];
-                        const val1 = data.datasets[0].data[i];
-                        const val2 = data.datasets[0].data[i+1];
-                        const diff = val2 - val1;
-                        
-                        if (diff !== 0) {
-                            const midX = (pt1.x + pt2.x) / 2;
-                            const midY = ((pt1.y + pt2.y) / 2) - 12;
-                            
-                            const diffText = diff > 0 ? `▲+${diff}` : `▼${diff}`;
-                            ctx.fillStyle = diff > 0 ? '#ef4444' : '#38bdf8';
-                            ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
-                            ctx.shadowBlur = 4;
-                            ctx.fillText(diffText, midX, midY);
-                        }
-                    }
-                    ctx.restore();
-                }
-            };
 
             chartInstance = new Chart(ctx, {
                 type: 'line',
@@ -328,7 +293,7 @@
                         tension: 0.4 
                     }]
                 },
-                plugins: [rallyDataPlugin],
+                // 取消原本會畫出區段數值的 rallyDataPlugin 外掛
                 options: {
                     animation: false,
                     layout: { padding: { left: 15, right: 15, top: 15 } }, 
@@ -357,12 +322,19 @@
                             beginAtZero: false,
                             min: 3000, 
                             suggestedMax: 5600, 
-                            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-                            ticks: { color: '#64748b', font: { family: 'Orbitron' }, padding: 8 }
+                            grid: { color: 'rgba(255, 255, 255, 0.15)' }, // 讓水平格線稍微清晰一點
+                            ticks: { 
+                                color: '#38bdf8', // 換成高對比的科技水藍色
+                                font: { family: 'Orbitron', weight: 'bold' }, 
+                                padding: 8 
+                            }
                         },
                         x: {
                             grid: { display: false },
-                            ticks: { color: '#94a3b8', font: { family: 'Noto Sans TC', weight: 'bold' } }
+                            ticks: { 
+                                color: '#38bdf8', // 換成高對比的科技水藍色
+                                font: { family: 'Noto Sans TC', weight: '900' } 
+                            }
                         }
                     }
                 }
