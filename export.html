@@ -15,7 +15,7 @@
         .split-row:hover { background: rgba(51, 65, 85, 0.4); transition: background-color 0.2s; }
         .data-value { font-family: 'Orbitron', sans-serif; font-weight: 900; }
 
-        /* --- 列印專用樣式區塊 (科技感升級版) --- */
+        /* --- 列印專用樣式區塊 --- */
         @media print {
             @page { size: A4 portrait; margin: 8mm; }
             
@@ -57,19 +57,17 @@
             .print-stats-label { font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase; }
             .print-stats-value { font-size: 18px; font-family: 'Orbitron'; font-weight: 900; color: #0f172a; }
 
-            .print-chart-container { margin-bottom: 15px; background: rgba(15, 23, 42, 0.05); padding: 10px 12px 5px 12px; border: 1px solid #cbd5e1; border-radius: 8px; }
+            .print-chart-container { margin-bottom: 15px; background: rgba(15, 23, 42, 0.05); padding: 10px 12px 5px 12px; border: 1px solid #cbd5e1; border-radius: 8px; text-align: center; }
             .print-chart-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 6px; }
             .print-chart-title { font-size: 12px; font-weight: 900; color: #475569; text-transform: uppercase; letter-spacing: 1px; }
             .print-chart-container img { max-width: 100%; height: auto; max-height: 220px; object-fit: contain; margin: 0 auto; display: block; }
 
-            /* =========================================
-               科技感表格核心樣式 (Telemetry Log Style)
-               ========================================= */
+            /* 表格樣式微調：配合新增的小標籤，稍微縮減 td 的上下 padding 確保不跨頁 */
             .print-table { 
                 width: 100%; 
-                border-collapse: separate; /* 改為 separate 以支援更活潑的邊框 */
+                border-collapse: separate; 
                 border-spacing: 0;
-                background: rgba(255,255,255,0.75); /* 稍微調降透明度，讓雪山透出來 */
+                background: rgba(255,255,255,0.75); 
                 border-radius: 8px; 
                 overflow: hidden; 
                 border: 1px solid rgba(148, 163, 184, 0.4);
@@ -83,25 +81,24 @@
                 color: #475569; 
                 text-transform: uppercase; 
                 letter-spacing: 1.5px;
-                padding: 16px 20px; /* 大幅增加表頭的呼吸空間 */
+                padding: 16px 20px; 
                 border-bottom: 2px solid rgba(15, 23, 42, 0.1); 
             }
             .print-table td { 
-                padding: 22px 20px; /* 大幅增加每一列的上下高度，填滿頁面 */
+                padding: 16px 20px; /* 稍微縮小上下 padding */
                 font-size: 15px; 
                 font-weight: 900; 
                 color: #1e293b; 
-                border-bottom: 1px dashed #cbd5e1; /* 科技感虛線分隔 */
+                border-bottom: 1px dashed #cbd5e1; 
                 vertical-align: middle;
             }
             .print-table tr:last-child td {
-                border-bottom: none; /* 最後一列不需要底線 */
+                border-bottom: none;
             }
             
-            /* 日期欄位的左側科技感發光條 */
             .tech-date-cell {
                 position: relative;
-                color: #0284c7 !important; /* 科技水藍色 */
+                color: #0284c7 !important; 
             }
             .tech-date-cell::before {
                 content: '';
@@ -114,7 +111,6 @@
                 border-radius: 0 4px 4px 0;
             }
 
-            /* 路線中的科技感箭頭 */
             .tech-arrow {
                 color: #ea580c;
                 font-size: 13px;
@@ -278,10 +274,10 @@
         <table class="print-table">
             <thead>
                 <tr>
-                    <th style="width: 15%">// 日期 (Date)</th>
-                    <th style="width: 45%">// 單日行程路線 (Daily Route)</th>
-                    <th style="width: 20%">// 單日里程 (KM)</th>
-                    <th style="width: 20%">// 單日用時 (Time)</th>
+                    <th style="width: 13%">// 日期 (Date)</th>
+                    <th style="width: 53%">// 單日行程路線 (Daily Route)</th>
+                    <th style="width: 17%">// 單日里程 (KM)</th>
+                    <th style="width: 17%">// 單日用時 (Time)</th>
                 </tr>
             </thead>
             <tbody id="printTableBody">
@@ -470,12 +466,22 @@
                     
                     let dayKM = 0;
                     let dayActualMin = 0;
+                    
+                    // 新增用來存放 SS 航段小標籤的陣列
+                    let dayMiniTagsWeb = [];
+                    let dayMiniTagsPrint = [];
 
                     sections.forEach(secName => {
                         const startPoint = dayRecords.find(r => r.Section.trim() === secName && r.Type.trim().toUpperCase() === 'START');
                         const endPoint = dayRecords.find(r => r.Section.trim() === secName && r.Type.trim().toUpperCase() === 'END');
                         const info = itinerary.find(i => i.Day === day && i.Section.trim().toUpperCase() === secName.toUpperCase());
                         
+                        let secKMText = "0.0";
+                        if (info && info.D) {
+                            secKMText = parseFloat(info.D).toFixed(1);
+                        }
+
+                        let actualTimeText = "Incomplete";
                         if (startPoint && endPoint) {
                             const startTime = new Date(startPoint.Timestamp);
                             const endTime = new Date(endPoint.Timestamp);
@@ -485,26 +491,41 @@
                             if (diffMin >= 0) {
                                 dayActualMin += diffMin;
                                 totalActualMin += diffMin;
+                                actualTimeText = diffMin >= 60 ? `${Math.floor(diffMin/60)}h ${diffMin%60}m` : `${diffMin}m`;
                             }
                             if(info) dayKM += (parseFloat(info.D) || 0);
+                        } else if (startPoint && !endPoint) {
+                            actualTimeText = "Running...";
+                        }
+
+                        if (info) {
+                            const sectionStatsText = `${secKMText}km / ${actualTimeText}`;
+                            
+                            // 網頁版的深色質感膠囊標籤
+                            dayMiniTagsWeb.push(`<span class="bg-slate-800/80 border border-slate-700 px-2 py-1 rounded text-[9px] tech-font text-slate-400"><strong class="text-yellow-500 mr-1">${secName}</strong>${sectionStatsText}</span>`);
+
+                            // 列印版的白底高反差膠囊標籤
+                            dayMiniTagsPrint.push(`<span style="background: rgba(15, 23, 42, 0.04); border: 1px solid rgba(148, 163, 184, 0.3); padding: 3px 6px; border-radius: 4px; font-size: 9px; color: #64748b; font-family: 'Orbitron', sans-serif;"><strong style="color: #0284c7; margin-right: 3px;">${secName}</strong>${sectionStatsText}</span>`);
                         }
                     });
 
                     totalKM += dayKM;
 
                     const dayRouteName = dailyRouteMap[day] || "未知路線";
-                    // 將路線中的箭頭替換為科技感樣式的指標 (僅限列印版)
                     const techArrow = `<span class="tech-arrow">▶</span>`;
                     const dayRouteNameTech = dayRouteName.replace('➔', techArrow);
 
                     const dayTimeString = `${Math.floor(dayActualMin/60)}h ${Math.round(dayActualMin%60)}m`;
 
-                    // 網頁版 HTML
+                    // 將標籤加入網頁版結構中
                     splitsHtml += `
                         <tr class="split-row border-b border-slate-700/50">
                             <td class="p-6 font-black tech-font text-yellow-500 align-middle">${day}</td>
                             <td class="p-6 align-middle">
-                                <span class="text-slate-300 font-bold tracking-wider text-base">${dayRouteName}</span>
+                                <div class="text-slate-300 font-bold tracking-wider text-base mb-2">${dayRouteName}</div>
+                                <div class="flex flex-wrap gap-2">
+                                    ${dayMiniTagsWeb.join('')}
+                                </div>
                             </td>
                             <td class="p-6 text-xl text-white data-value align-middle">${dayKM.toFixed(1)} <span class="text-[10px] text-slate-500 uppercase">km</span></td>
                             <td class="p-6 text-yellow-500 data-value align-middle">${dayTimeString}</td>
@@ -516,13 +537,18 @@
                         </tr>
                     `;
 
-                    // 列印版 HTML - 套用科技感樣式與寬鬆 Padding
+                    // 將標籤加入列印版結構中
                     printHtml += `
                         <tr>
-                            <td class="tech-date-cell" style="font-family: 'Orbitron'; font-weight: bold;">${day}</td>
-                            <td style="font-weight: 900; letter-spacing: 0.5px;">${dayRouteNameTech}</td>
-                            <td style="font-family: 'Orbitron';">${dayKM.toFixed(1)} <span style="font-size: 10px; opacity: 0.7;">km</span></td>
-                            <td style="font-family: 'Orbitron'; color: #ea580c;">${dayTimeString}</td>
+                            <td class="tech-date-cell" style="font-family: 'Orbitron'; font-weight: bold; vertical-align: middle;">${day}</td>
+                            <td style="vertical-align: middle;">
+                                <div style="font-weight: 900; font-size: 14px; color: #0f172a; letter-spacing: 0.5px; margin-bottom: 6px;">${dayRouteNameTech}</div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                    ${dayMiniTagsPrint.join('')}
+                                </div>
+                            </td>
+                            <td style="font-family: 'Orbitron'; vertical-align: middle;">${dayKM.toFixed(1)} <span style="font-size: 10px; opacity: 0.7;">km</span></td>
+                            <td style="font-family: 'Orbitron'; color: #ea580c; vertical-align: middle;">${dayTimeString}</td>
                         </tr>
                     `;
                 });
