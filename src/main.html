@@ -64,12 +64,12 @@
                 <p class="text-[9px] font-black text-gray-600 uppercase tracking-[0.4em] mb-1">COMMANDER</p>
                 <h2 id="userNameDisplay" class="font-black name-banner italic">---</h2>
             </div>
-            <section id="dayOverviewSection" class="mb-8 bg-zinc-900/80 rounded-[2rem] p-8 border border-zinc-800">
+            <section id="dayOverviewSection" class="mb-8 bg-zinc-900/80 rounded-[2rem] p-8 border border-zinc-800 shadow-xl">
                 <div class="flex justify-between items-center mb-6">
                     <h2 id="currentDayText" class="text-xl font-black italic text-[#D4AF37]">ROUTE PLAN</h2>
                     <button id="btnDayMap" class="btn-full-day active:scale-95 transition-all">觀看全日路線</button>
                 </div>
-                <div id="dayEndpoints" class="space-y-4 border-l-4 border-gray-700 pl-6 text-white font-bold"></div>
+                <div id="dayEndpoints" class="space-y-3 border-l-4 border-gray-700 pl-6 text-white font-bold"></div>
                 <div id="dayDescription" class="mt-6 text-sm text-gray-400 font-bold italic leading-relaxed border-t border-zinc-800/50 pt-4"></div>
             </section>
             <div id="stageContainer" class="space-y-2"></div>
@@ -126,7 +126,6 @@
                 
                 const now = new Date();
                 const todayFormatted = `${now.getMonth() + 1}/${now.getDate()}`;
-                // 修改有效日期為 10 天
                 const validDays = ["5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"];
                 const startDay = validDays.includes(todayFormatted) ? todayFormatted : "5/11";
                 changeDay(startDay);
@@ -202,9 +201,25 @@
             const dLine = dayData.find(i => i.Section === "DayLine");
             if (dLine) {
                 document.getElementById('currentDayText').innerText = `${day} ROUTE`;
+                
+                // 處理 DayLine 的里程與預估時數
+                const dText = dLine.D ? (String(dLine.D).toUpperCase().includes('KM') ? dLine.D : dLine.D + ' KM') : '-- KM';
+                const tText = dLine.Est_Time || '--';
+
                 document.getElementById('dayEndpoints').innerHTML = `
-                    <div class="flex items-center"><span class="route-label label-start">Start</span>${dLine.Start_Point}</div>
-                    <div class="flex items-center"><span class="route-label label-finish">Finish</span>${dLine.End_Point}</div>
+                    <div class="flex items-center"><span class="text-gray-500 mr-3 text-[10px] font-black uppercase tracking-widest">Start</span>${dLine.Start_Point || ''}</div>
+                    <div class="flex items-center"><span class="text-[#8B1A1A] mr-3 text-[10px] font-black uppercase tracking-widest">Finish</span>${dLine.End_Point || ''}</div>
+                    
+                    <div class="mt-8 mb-2 grid grid-cols-2 gap-4">
+                        <div class="bg-black/40 border border-zinc-800/80 rounded-[1.2rem] p-4 shadow-inner">
+                            <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest mb-1">Total Distance</p>
+                            <p class="text-xl font-black tech-font text-white">${dText}</p>
+                        </div>
+                        <div class="bg-black/40 border border-zinc-800/80 rounded-[1.2rem] p-4 shadow-inner">
+                            <p class="text-[9px] text-[#D4AF37] uppercase font-bold tracking-widest mb-1">Est. Time</p>
+                            <p class="text-xl font-black tech-font text-white">${tText}</p>
+                        </div>
+                    </div>
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
                 document.getElementById('dayDescription').innerText = dLine.Description || "";
@@ -220,12 +235,9 @@
                 } else if (item.Section.startsWith("SS")) {
                     const currentSSNum = parseInt(item.Section.replace("SS", ""));
                     
-                    // 檢查當前 SS 的狀態
                     const hasStart = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'START');
                     const hasEnd = userCheckIns.some(c => parseDay(c.Day) === day && c.Section.trim() === item.Section.trim() && c.Type === 'END');
                     
-                    // --- 核心順序邏輯 ---
-                    // 1. START 能否點擊：必須是當天，且「前一個 SS 已經完成 END」
                     let canStart = !isFuture && !hasStart;
                     if (currentSSNum > 1) {
                         const prevSSName = "SS" + (currentSSNum - 1);
@@ -233,9 +245,7 @@
                         if (!prevFinished) canStart = false;
                     }
 
-                    // 2. FINISH 能否點擊：必須已經按過當前 SS 的 START
                     let canFinish = hasStart && !hasEnd;
-                    // ------------------
 
                     const html = `
                         <div class="stage-card shadow-xl">
@@ -287,7 +297,6 @@
                 const myRecords = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
                 let totalActualMin = 0, totalKM = 0, html = "";
                 
-                // 修改紀錄載入的陣列為 10 天
                 ["5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"].forEach(d => {
                     const dayRecords = myRecords.filter(r => parseDay(r.Day) === d);
                     const sections = [...new Set(dayRecords.map(r => r.Section.trim()))];
