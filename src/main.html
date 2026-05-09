@@ -30,6 +30,10 @@
         .name-banner { background: linear-gradient(to right, #ffffff, #D4AF37); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3rem; line-height: 1.2; }
         .logo-glow { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
+        
+        /* 測試日專用樣式 */
+        .test-day-tab { color: #fbbf24; border-bottom-style: dashed; }
+        .test-day-tab.active { border-color: #fbbf24; color: #fbbf24; }
     </style>
 </head>
 <body class="pb-20">
@@ -45,6 +49,7 @@
             <button onclick="switchTab('record')" class="text-[10px] font-black text-[#D4AF37] border border-[#D4AF37] px-3 py-1 rounded-full">🏆 觀看紀錄</button>
         </div>
         <div id="dateScroll" class="flex overflow-x-auto px-4 py-1 gap-4 scrollbar-hide bg-black/20">
+            <button onclick="changeDay('5/10')" class="date-tab test-day-tab" id="tab-5/10">5/10 (測試)</button>
             <button onclick="changeDay('5/11')" class="date-tab active" id="tab-5/11">5/11</button>
             <button onclick="changeDay('5/12')" class="date-tab" id="tab-5/12">5/12</button>
             <button onclick="changeDay('5/13')" class="date-tab" id="tab-5/13">5/13</button>
@@ -80,15 +85,16 @@
             <section class="bg-zinc-900/80 p-8 rounded-[2.5rem] border-b-[8px] border-[#8B1A1A] mb-8 text-white text-center shadow-2xl">
                 <h2 id="recordNameDisplay" class="text-3xl font-black italic mb-6">---</h2>
                 <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
+                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800 relative">
                         <p class="text-[9px] text-gray-500 uppercase font-bold tracking-widest">Total Distance</p>
                         <p id="statKM" class="text-2xl font-black tech-font">0.0 KM</p>
                     </div>
-                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800">
+                    <div class="bg-black/50 p-6 rounded-[1.5rem] border border-gray-800 relative">
                         <p class="text-[9px] text-gray-500 uppercase font-bold text-yellow-500 tracking-widest">Actual Time</p>
                         <p id="statTime" class="text-2xl font-black tech-font text-white">0h 0m</p>
                     </div>
                 </div>
+                <p class="text-[9px] text-gray-500 mt-4 italic">*測試日 (5/10) 之數據不計入上方總和</p>
             </section>
             <div id="splitList" class="space-y-1"></div>
         </div>
@@ -126,7 +132,9 @@
                 
                 const now = new Date();
                 const todayFormatted = `${now.getMonth() + 1}/${now.getDate()}`;
-                const validDays = ["5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"];
+                
+                // 將 5/10 加入有效日陣列中
+                const validDays = ["5/10", "5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"];
                 const startDay = validDays.includes(todayFormatted) ? todayFormatted : "5/11";
                 changeDay(startDay);
             } catch (e) { alert("連線失敗"); }
@@ -136,7 +144,9 @@
             const btn = event.currentTarget;
             if (btn.disabled) return;
 
-            const dayStr = document.querySelector('.date-tab.active').innerText;
+            // 為了避免抓到 "5/10 (測試)" 這串字導致日期判斷失敗，改由抓取 ID 來還原日期
+            const activeTab = document.querySelector('.date-tab.active');
+            const dayStr = activeTab.id.replace('tab-', ''); 
             const now = new Date();
             
             // 未來日期檢測
@@ -199,10 +209,11 @@
 
             const dayData = itineraryData.filter(i => parseDay(i.Day) === day);
             const dLine = dayData.find(i => i.Section === "DayLine");
+            
+            const titleLabel = day === '5/10' ? '5/10 TEST ROUTE' : `${day} ROUTE`;
+            
             if (dLine) {
-                document.getElementById('currentDayText').innerText = `${day} ROUTE`;
-                
-                // 處理 DayLine 的里程與預估時數
+                document.getElementById('currentDayText').innerText = titleLabel;
                 const dText = dLine.D ? (String(dLine.D).toUpperCase().includes('KM') ? dLine.D : dLine.D + ' KM') : '-- KM';
                 const tText = dLine.Est_Time || '--';
 
@@ -223,6 +234,11 @@
                 `;
                 document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
                 document.getElementById('dayDescription').innerText = dLine.Description || "";
+            } else {
+                // 如果 Sheet 中還沒有建立 DayLine 也能顯示標題
+                document.getElementById('currentDayText').innerText = titleLabel;
+                document.getElementById('dayEndpoints').innerHTML = '<p class="text-gray-500 text-xs italic">尚無全日路線資料...</p>';
+                document.getElementById('dayDescription').innerText = "";
             }
 
             const mainContent = dayData.filter(i => i.Section !== "DayLine");
@@ -297,7 +313,8 @@
                 const myRecords = allChecks.filter(r => r.CustomerID && r.CustomerID.trim().toUpperCase() === uID.toUpperCase());
                 let totalActualMin = 0, totalKM = 0, html = "";
                 
-                ["5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"].forEach(d => {
+                // 加入 5/10 在陣列內使其顯示於紀錄下方，但我們在加總時計劃排除它
+                ["5/10", "5/11", "5/12", "5/13", "5/14", "5/15", "5/16", "5/17", "5/18", "5/19", "5/20"].forEach(d => {
                     const dayRecords = myRecords.filter(r => parseDay(r.Day) === d);
                     const sections = [...new Set(dayRecords.map(r => r.Section.trim()))];
                     let dayKM = 0, dayActualMin = 0, sectionDetails = [];
@@ -317,9 +334,32 @@
                         } else if (start) { actualTimeText = "Running..."; }
                         if(sec.startsWith("SS")) sectionDetails.push(`${sec}<span class="record-sec-tag">(${actualTimeText})</span>`);
                     });
-                    totalActualMin += dayActualMin; totalKM += dayKM;
-                    html += `<div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1"><div><p class="text-[9px] text-gray-500 mb-1 uppercase">${d}</p><div class="text-[10px] font-bold text-gray-400 leading-relaxed">${sectionDetails.length > 0 ? sectionDetails.join(' | ') : '---'}</div></div><div class="text-right ml-4"><p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p><p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p></div></div>`;
+                    
+                    // 關鍵修改：如果是正式行程 (非 5/10)，才算入上方的大總和內
+                    if (d !== "5/10") {
+                        totalActualMin += dayActualMin; 
+                        totalKM += dayKM;
+                    }
+                    
+                    const displayDay = d === "5/10" ? "5/10 (TEST)" : d;
+                    const opacityClass = d === "5/10" ? "opacity-60" : ""; // 測試日讓他稍微有點透明，視覺做個區別
+
+                    // 確保沒有資料的時候不渲染空白卡片，或直接顯示預設狀態
+                    if(sectionDetails.length > 0 || d !== "5/10") {
+                        html += `
+                        <div class="flex justify-between items-center p-6 bg-zinc-900/80 rounded-[1.5rem] border border-zinc-800 mb-1 ${opacityClass}">
+                            <div>
+                                <p class="text-[9px] ${d === "5/10" ? "text-yellow-500" : "text-gray-500"} mb-1 uppercase">${displayDay}</p>
+                                <div class="text-[10px] font-bold text-gray-400 leading-relaxed">${sectionDetails.length > 0 ? sectionDetails.join(' | ') : '---'}</div>
+                            </div>
+                            <div class="text-right ml-4">
+                                <p class="text-lg font-black tech-font text-white italic">${dayKM.toFixed(1)} KM</p>
+                                <p class="text-[10px] tech-font text-yellow-500">${Math.floor(dayActualMin/60)}h ${dayActualMin%60}m</p>
+                            </div>
+                        </div>`;
+                    }
                 });
+                
                 document.getElementById('statKM').innerText = totalKM.toFixed(1) + " KM";
                 document.getElementById('statTime').innerText = `${Math.floor(totalActualMin/60)}h ${Math.round(totalActualMin%60)}m`;
                 splitArea.innerHTML = html;
