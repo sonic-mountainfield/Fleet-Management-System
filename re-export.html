@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUNNY HOUSE - 歷史紀錄匯出終端</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@900&family=Noto+Sans+TC:wght@500;900&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #0d0d0d; color: #e5e5e5; margin: 0; }
+        .tech-font { font-family: 'Orbitron', sans-serif; }
+        .nav-header { background: rgba(139, 26, 26, 0.95); border-bottom: 2px solid #D4AF37; }
+        .logo-glow { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.4)); }
+        
+        /* 表格樣式 */
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #1a1a1a; color: #D4AF37; text-transform: uppercase; font-family: 'Orbitron', sans-serif; letter-spacing: 0.1em; }
+        td, th { padding: 12px 16px; border-bottom: 1px solid #333; text-align: left; }
+        tr:hover { background-color: #1a1a1a; }
+        
+        /* 狀態標籤 */
+        .badge-start { background-color: #8B1A1A; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+        .badge-end { background-color: #333; border: 1px solid #555; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+
+        /* 列印專用排版 */
+        @media print {
+            body { background-color: white !important; color: black !important; }
+            .no-print { display: none !important; }
+            .print-header { display: block !important; text-align: center; margin-bottom: 20px; color: black; }
+            table { width: 100%; border: 1px solid #000; }
+            th { background-color: #f0f0f0 !important; color: black !important; border: 1px solid #000; -webkit-print-color-adjust: exact; }
+            td { border: 1px solid #000; color: black !important; padding: 8px; font-size: 12px; }
+            tr:hover { background-color: transparent; }
+            .badge-start, .badge-end { background-color: transparent !important; color: black !important; border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body class="pb-20">
+
+    <nav class="nav-header no-print p-4 flex justify-between items-center shadow-2xl">
+        <div class="flex items-center gap-3">
+            <h1 class="tech-font text-lg tracking-widest text-white italic">FLEET DATA EXPORT</h1>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="window.history.back()" class="text-sm font-bold text-gray-300 hover:text-white transition">返回</button>
+            <button onclick="window.print()" class="text-sm font-black text-[#000] bg-[#D4AF37] px-4 py-2 rounded-md shadow-[0_0_10px_rgba(212,175,55,0.5)] active:scale-95 transition">🖨️ 列印紀錄 / 存為 PDF</button>
+        </div>
+    </nav>
+
+    <div class="hidden print-header mt-8">
+        <h1 class="text-2xl font-black mb-2">SUNNY HOUSE 車隊歷史紀錄 (Backup)</h1>
+        <p class="text-sm text-gray-600" id="printDate">列印時間：---</p>
+    </div>
+
+    <main class="max-w-6xl mx-auto p-4 mt-6">
+        <div id="loadingView" class="text-center py-20">
+            <p class="tech-font text-[#D4AF37] text-xl animate-pulse tracking-widest">FETCHING BACKUP DATA...</p>
+            <p class="text-gray-500 text-sm mt-2">正在從資料庫讀取舊紀錄，請稍候</p>
+        </div>
+
+        <div id="dataView" class="hidden bg-zinc-900/50 rounded-2xl border border-zinc-800 overflow-hidden shadow-2xl p-1">
+            <div class="overflow-x-auto">
+                <table id="backupTable" class="min-w-full">
+                    <thead>
+                        <tr>
+                            <th>駕駛代號 (ID)</th>
+                            <th>日期 (Day)</th>
+                            <th>賽段 (Section)</th>
+                            <th>打卡類型 (Type)</th>
+                            <th>打卡時間 (Time)</th>
+                            <th>詳細時間戳 (Timestamp)</th>
+                            <th>地點 (Location)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="backupTableBody" class="text-sm">
+                        </tbody>
+                </table>
+            </div>
+            <div id="emptyMessage" class="hidden p-10 text-center text-gray-500 font-bold italic">
+                目前 Backup 資料庫中沒有任何紀錄。
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // 設定 API 到 Backup 分頁
+        const API_BASE = 'https://sheetdb.io/api/v1/j7wain8kbsyu9';
+        
+        async function loadBackupData() {
+            const tableBody = document.getElementById('backupTableBody');
+            const loadingView = document.getElementById('loadingView');
+            const dataView = document.getElementById('dataView');
+            const emptyMessage = document.getElementById('emptyMessage');
+
+            // 設定列印時間
+            const now = new Date();
+            document.getElementById('printDate').innerText = `列印時間：${now.toLocaleString('zh-TW')}`;
+
+            try {
+                // 指定讀取 Backup 分頁
+                const res = await fetch(`${API_BASE}?sheet=Backup`);
+                if (!res.ok) throw new Error('API 回應錯誤');
+                
+                let records = await res.json();
+                
+                // 隱藏載入中，顯示資料區塊
+                loadingView.classList.add('hidden');
+                dataView.classList.remove('hidden');
+
+                // 若為空陣列或只有一筆全空資料
+                if (!records || records.length === 0 || (records.length === 1 && !records[0].CustomerID)) {
+                    emptyMessage.classList.remove('hidden');
+                    return;
+                }
+
+                // 可以依照 Timestamp 進行排序 (最新的在上面)
+                records.sort((a, b) => new Date(b.Timestamp) - new Date(a.Timestamp));
+
+                let html = '';
+                records.forEach(record => {
+                    // 跳過空白行
+                    if(!record.CustomerID) return; 
+
+                    // 判斷徽章樣式
+                    const typeBadge = record.Type && record.Type.toUpperCase() === 'START' 
+                                    ? `<span class="badge-start">START</span>` 
+                                    : `<span class="badge-end">FINISH</span>`;
+                    
+                    // 格式化時間戳記以便於閱讀 (可選)
+                    let displayTime = record.Timestamp;
+                    try {
+                        const tDate = new Date(record.Timestamp);
+                        if(!isNaN(tDate)) {
+                            displayTime = tDate.toLocaleString('zh-TW', { hour12: false });
+                        }
+                    } catch(e) {}
+
+                    html += `
+                        <tr>
+                            <td class="font-bold text-white">${record.CustomerID || '--'}</td>
+                            <td class="tech-font text-[#D4AF37]">${record.Day || '--'}</td>
+                            <td class="font-bold">${record.Section || '--'}</td>
+                            <td>${typeBadge}</td>
+                            <td class="tech-font">${record.CheckIn_Time || '--'}</td>
+                            <td class="text-xs text-gray-400">${displayTime || '--'}</td>
+                            <td class="text-gray-300 truncate max-w-xs" title="${record.LocationName || ''}">${record.LocationName || '--'}</td>
+                        </tr>
+                    `;
+                });
+
+                if (html === '') {
+                    emptyMessage.classList.remove('hidden');
+                } else {
+                    tableBody.innerHTML = html;
+                }
+
+            } catch (error) {
+                loadingView.innerHTML = `<p class="text-red-500 font-bold text-xl">⚠️ 無法連線至資料庫</p><p class="text-gray-500 text-sm mt-2">請檢查網路連線或 SheetDB 設定。</p>`;
+                console.error(error);
+            }
+        }
+
+        // 頁面載入時執行
+        window.addEventListener('DOMContentLoaded', loadBackupData);
+    </script>
+</body>
+</html>
