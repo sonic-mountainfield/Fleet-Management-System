@@ -83,11 +83,11 @@
                 color: #475569; 
                 text-transform: uppercase; 
                 letter-spacing: 1px;
-                padding: 12px 20px; /* 從 16px 縮小至 12px */
+                padding: 12px 20px;
                 border-bottom: 2px solid rgba(15, 23, 42, 0.1); 
             }
             .print-table td { 
-                padding: 12px 20px; /* 從 16px 縮小至 12px */
+                padding: 12px 20px;
                 font-size: 14px; 
                 font-weight: 900; 
                 color: #1e293b; 
@@ -415,8 +415,8 @@
 
             try {
                 const [itiRes, checkRes, userRes] = await Promise.all([
-                    fetch(`${API_BASE}?sheet=Itinerary`),
-                    fetch(`${API_BASE}?sheet=CheckIns`),
+                    fetch(`${API_BASE}?sheet=TC Itinerary`), // 修改為 TC Itinerary
+                    fetch(`${API_BASE}?sheet=Backup`),       // 修改為 Backup
                     fetch(`${API_BASE}?sheet=Users`)
                 ]);
 
