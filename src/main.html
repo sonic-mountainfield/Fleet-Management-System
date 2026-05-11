@@ -109,6 +109,29 @@
 
         if (!uID || !uName) window.location.href = '../index.html';
 
+        // ===== 核心改寫：智慧導航跳轉函數 (解決 Android 喚醒阻擋問題) =====
+        function openNav(url) {
+            if (!url) return;
+            const isAndroid = /Android/i.test(navigator.userAgent);
+            
+            if (isAndroid) {
+                try {
+                    const urlObj = new URL(url);
+                    const scheme = urlObj.protocol.replace(':', '');
+                    const hostAndPath = urlObj.host + urlObj.pathname + urlObj.search;
+                    
+                    const intentUrl = `intent://${hostAndPath}#Intent;scheme=${scheme};package=com.autonavi.minimap;S.browser_fallback_url=${encodeURIComponent(url)};end`;
+                    
+                    window.location.href = intentUrl;
+                } catch (e) {
+                    window.location.href = url;
+                }
+            } else {
+                window.location.href = url;
+            }
+        }
+        // ==============================================================
+
         function parseDay(d) {
             if (!d) return "";
             if (!isNaN(d) && parseFloat(d) > 40000) {
@@ -232,7 +255,8 @@
                         </div>
                     </div>
                 `;
-                document.getElementById('btnDayMap').onclick = () => window.open(dLine.Amap_Link);
+                // 使用 openNav
+                document.getElementById('btnDayMap').onclick = () => openNav(dLine.Amap_Link);
                 document.getElementById('dayDescription').innerText = dLine.Description || "";
             } else {
                 // 如果 Sheet 中還沒有建立 DayLine 也能顯示標題
@@ -285,7 +309,7 @@
                                     </div>
                                 </div>
                                 ${item.Description ? `<div class="ss-description-box"><p class="text-[9px] text-[#8B1A1A] font-black uppercase mb-1 tracking-widest italic">Pilot Notes</p><p class="text-xs font-black text-gray-300 leading-relaxed">${item.Description}</p></div>` : ''}
-                                <button onclick="window.open('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
+                                <button onclick="openNav('${item.Amap_Link}')" class="w-full py-4 bg-white text-black font-black text-lg rounded-xl mb-4 italic transition-transform active:scale-95">🧭 開啟導航</button>
                                 <div class="grid grid-cols-2 gap-4">
                                     <button onclick="postCheckIn('START', '${item.Section}', event)" 
                                             class="py-4 rounded-xl font-black text-white text-xs ${hasStart ? 'btn-done' : (canStart ? 'bg-[#8B1A1A]' : 'btn-locked')}">
