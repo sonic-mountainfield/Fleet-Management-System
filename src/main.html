@@ -287,13 +287,15 @@
 
                     let canFinish = hasStart && !hasEnd;
 
+                    // 這裡把出發時間標籤 (item.T) 加進去了！
                     const html = `
                         <div class="stage-card shadow-xl">
                             <div class="p-8">
                                 <div class="flex flex-row-reverse justify-between items-start mb-8 text-white">
                                     <h3 class="ss-header tech-font">${item.Section}</h3>
-                                    <div class="text-left">
-                                        <div class="text-xl font-black tech-font">里程：${item.D}</div>
+                                    <div class="text-left flex flex-col gap-1">
+                                        ${item.T ? `<div class="inline-block bg-[#8B1A1A]/20 border border-[#8B1A1A] text-[#ff4d4d] px-2 py-1 rounded-md text-[10px] font-black tech-font tracking-wider mb-1 w-max shadow-sm">出發時間：${item.T}</div>` : ''}
+                                        <div class="text-xl font-black tech-font mt-1">里程：${item.D}</div>
                                         <div class="text-sm font-black tech-font text-[#D4AF37]">預計：${item.Est_Time || '--'}</div>
                                     </div>
                                 </div>
